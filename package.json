@@ -45,14 +45,21 @@
       "target": [
         "nsis"
       ],
-      "icon": "public/logo.png"
+      "icon": "assets/installer/icon.ico"
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Spotifly"
+      "shortcutName": "Spotifly",
+      "installerIcon": "assets/installer/icon.ico",
+      "uninstallerIcon": "assets/installer/icon.ico",
+      "installerHeader": "assets/installer/installerHeader.bmp",
+      "installerSidebar": "assets/installer/installerSidebar.bmp",
+      "uninstallerSidebar": "assets/installer/uninstallerSidebar.bmp",
+      "runAfterFinish": true
     }
   },
   "dependencies": {

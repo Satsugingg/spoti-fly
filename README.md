@@ -1,74 +1,73 @@
-# spoti-fly 🎵🪽
+# Spotifly 🎵🪽
 
 > **Ultra-Lightweight, Always-on-Top Floating Spotify Mini-Player for Windows with Glassmorphic Physics, GSMTC Native Sync, and Spicetify Integration.**
 
-![spoti-fly Banner](public/cover.png)
+<p align="center">
+  <img src="public/cover.png" alt="Spotifly Cover" width="560" style="border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/Satsugingg/spoti-fly/releases/latest">
+    <img src="https://img.shields.io/badge/Download-Spotifly%20Setup%20(.exe)-1DB954?style=for-the-badge&logo=windows&logoColor=black" alt="Download Spotifly for Windows" />
+  </a>
+  <a href="https://github.com/Satsugingg/spoti-fly/releases">
+    <img src="https://img.shields.io/github/v/release/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Latest%20Release" alt="Latest Release" />
+  </a>
+  <img src="https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-blue?style=for-the-badge" alt="Platform: Windows" />
+</p>
 
 ---
 
-## ✨ Highlights
+## 🚀 Quick Download & Install (For Everyone)
 
-* 🪟 **Always-on-Top & Pinned State:** Pin window down in place or unpin to drag anywhere across your monitors.
-* 🧲 **Fluid Drag Physics:** Powered by an exponential lerp drag engine with zero bounce.
-* 💨 **Smart Auto-Flattening:** Automatically contracts down after 2 seconds of mouse idle.
-* 🎵 **GSMTC Native Spotify Sync:** Reads Windows Global System Media Transport Controls directly via PowerShell daemon — targeting Spotify specifically with zero YouTube/browser media interference.
-* ➖ **Minimize & Window Controls:** Minimize directly to taskbar without terminating background sync, or exit anytime.
-* 🎨 **Configurable Opacity & Minimal Mode:** Full opacity slider (40%–100%) and ultra-flat minimal 72px mode.
-* 🚀 **Spicetify One-Click Integration:** Launch or focus `spoti-fly` directly from within the Spotify desktop app.
+1. Download the latest installer from **[Releases](https://github.com/Satsugingg/spoti-fly/releases/latest)**:
+   * **`Spotifly Setup.exe`**
+2. Run the installer and choose your shortcut preferences (Desktop & Start Menu).
+3. **Done!** Spotifly opens on your screen, hovers over all your apps and games, and automatically syncs live with Spotify playback. It starts quietly with Windows on every boot so it's always ready.
 
 ---
 
-## 🚀 Getting Started
+## ✨ Features
+
+* 🪟 **Always-on-Top:** Stays visible over full-screen apps, games, IDEs, and browser windows.
+* 🧲 **Fluid Drag Physics:** Exponential lerp motion with zero rubber-banding or stutter.
+* 🎵 **Native Windows GSMTC Sync:** Directly hooks into Windows Media Transport Controls — strictly targets Spotify with zero interference from YouTube or browser tabs.
+* 🎨 **Dual Display Modes:**
+  * **Standard Mode (130px):** Full album art, marquee title, artist, live glowing scrub bar, and controls.
+  * **Ultra-Flat Minimal Mode (72px):** Streamlined single-line layout (`Whisper My Name - Drake`) with elapsed time only.
+* 💨 **Smart Auto-Flattening:** Contracts smoothly after 2 seconds of mouse idle.
+* 🎛️ **Full Playback Controls:** Play/pause, next track, previous track, shuffle, repeat, and click-to-seek progress bar.
+* 🪽 **Optional Spicetify Companion:** If you use [Spicetify](https://spicetify.app), you can install the **spoti-fly** extension directly from Spicetify Marketplace to add a winged launcher button to Spotify's top bar!
+
+---
+
+## 🛠️ Developer Setup & Building from Source
+
+If you want to contribute or build Spotifly from source:
 
 ### Prerequisites
-
 * Windows 10 / 11
 * [Node.js](https://nodejs.org) (v18+)
-* Spotify Desktop Client & [Spicetify](https://spicetify.app)
+* Spotify Desktop Client
 
----
-
-### Step 1: Install & Build the Desktop Mini-Player
+### Building
 
 ```bash
 # Clone the repository
-git clone https://github.com/satsugingg/spoti-fly.git
+git clone https://github.com/Satsugingg/spoti-fly.git
 cd spoti-fly
 
-# Install dependencies & build
+# Install dependencies
 npm install
-npm run build
 
-# Register the Windows launcher protocol (run once in PowerShell)
-powershell -ExecutionPolicy Bypass -File ./register-protocol.ps1
+# Run in development mode
+npm run dev
+
+# Package standalone Windows NSIS Installer (.exe)
+npm run package
 ```
 
-You can now start `spoti-fly` anytime by:
-* **Double-clicking** `launch.vbs` (silent background launch), or
-* Running `npm start` in your terminal.
-
----
-
-### Step 2: Install the Spicetify Spotify Button
-
-To add the one-click winged button to your Spotify topbar:
-
-```powershell
-# From the root of the cloned spoti-fly directory:
-cd spicetify
-powershell -ExecutionPolicy Bypass -File ./install-to-spicetify.ps1
-```
-
-Once installed, restart Spotify and click the green winged icon in the topbar to instantly summon `spoti-fly`!
-
----
-
-## 🛠️ Scripts & Build Commands
-
-* `npm run dev` — Run Vite dev server + TypeScript watcher concurrently
-* `npm run build` — Clean build of both Electron main process and React renderer
-* `npm run typecheck` — TypeScript type validation
-* `npm start` — Launch production Electron build
+The compiled installer will be generated in `release/Spotifly Setup 1.0.0.exe`.
 
 ---
 
