@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Always-on-Top Spotify Mini-Player for Windows",
   "main": "dist/main/main.js",
-  "author": "Antigravity",
+  "author": "satsugingg",
   "license": "MIT",
   "scripts": {
     "clean": "node -e \"const fs = require('fs'); fs.rmSync('dist', { recursive: true, force: true });\"",

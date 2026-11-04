@@ -74,4 +74,4 @@ Once installed, restart Spotify and click the green winged icon in the topbar to
 
 ## 📄 License
 
-MIT License © 2026 Gustas
+MIT License © 2026 satsugingg
