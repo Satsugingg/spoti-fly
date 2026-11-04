@@ -29,6 +29,31 @@ if (!gotTheLock) {
   logDebug(`[LOCK] Acquired lock successfully. pid=${process.pid} args=${JSON.stringify(process.argv)}`);
 }
 
+// Native Electron protocol and startup registration
+try {
+  if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient('spoti-fly', process.execPath, [path.resolve(process.argv[1])]);
+    }
+  } else {
+    app.setAsDefaultProtocolClient('spoti-fly');
+  }
+} catch (err: any) {
+  logDebug(`[PROTOCOL] Protocol registration failed: ${err?.message}`);
+}
+
+try {
+  if (app.isPackaged) {
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      path: process.execPath,
+      args: ['--autostart'],
+    });
+  }
+} catch (err: any) {
+  logDebug(`[AUTOSTART] Login item registration failed: ${err?.message}`);
+}
+
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let gsmtcBridge: GsmtcBridge | null = null;
@@ -181,10 +206,15 @@ function createWindow() {
 
   mainWindow.webContents.on('did-finish-load', () => {
     logDebug(`[RENDERER] did-finish-load successfully at bounds: ${JSON.stringify(mainWindow?.getBounds())}`);
+    const isAutostart = process.argv.includes('--autostart') || process.argv.includes('--minimized') || process.argv.includes('--hidden');
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.show();
-      mainWindow.focus();
-      mainWindow.moveTop();
+      if (!isAutostart) {
+        mainWindow.show();
+        mainWindow.focus();
+        mainWindow.moveTop();
+      } else {
+        logDebug('[APP] Started in background/autostart mode. Window remains hidden until summoned.');
+      }
     }
   });
 

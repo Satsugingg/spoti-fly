@@ -15,7 +15,40 @@
     "dev:renderer": "vite",
     "dev:electron": "wait-on http://localhost:5173 && electron .",
     "dev": "npm run build:electron && concurrently -k \"npm run dev:renderer\" \"tsc -p tsconfig.electron.json --watch\" \"npm run dev:electron\"",
-    "start": "electron ."
+    "start": "electron .",
+    "package": "npm run build && electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.satsugingg.spotifly",
+    "productName": "Spotifly",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "protocols": [
+      {
+        "name": "spoti-fly",
+        "schemes": [
+          "spoti-fly"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "public/logo.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Spotifly"
+    }
   },
   "dependencies": {
     "lucide-react": "^1.67.0",
@@ -32,6 +65,7 @@
     "concurrently": "^10.0.6",
     "cross-env": "^10.1.0",
     "electron": "^45.2.1",
+    "electron-builder": "^26.18.0",
     "postcss": "^8.5.32",
     "tailwindcss": "^4.3.4",
     "typescript": "^7.0.2",
