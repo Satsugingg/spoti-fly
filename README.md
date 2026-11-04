@@ -1,6 +1,6 @@
 # Spotifly 🎵🪽
 
-> **Ultra-Lightweight, Always-on-Top Floating Spotify Mini-Player for Windows with Glassmorphic Physics, GSMTC Native Sync, and Spicetify Integration.**
+> **Ultra-Lightweight, Always-on-Top Floating Spotify Mini-Player for Windows with Glassmorphic Physics and GSMTC Native Sync.**
 
 <p align="center">
   <img src="public/cover.png" alt="Spotifly Cover" width="560" style="border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
@@ -37,7 +37,6 @@
   * **Ultra-Flat Minimal Mode (72px):** Streamlined single-line layout (`Whisper My Name - Drake`) with elapsed time only.
 * 💨 **Smart Auto-Flattening:** Contracts smoothly after 2 seconds of mouse idle.
 * 🎛️ **Full Playback Controls:** Play/pause, next track, previous track, shuffle, repeat, and click-to-seek progress bar.
-* 🪽 **Optional Spicetify Companion:** If you use [Spicetify](https://spicetify.app), you can install the **spoti-fly** extension directly from Spicetify Marketplace to add a winged launcher button to Spotify's top bar!
 
 ---
 
