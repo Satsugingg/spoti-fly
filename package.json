@@ -16,7 +16,7 @@
     "dev:electron": "wait-on http://localhost:5173 && electron .",
     "dev": "npm run build:electron && concurrently -k \"npm run dev:renderer\" \"tsc -p tsconfig.electron.json --watch\" \"npm run dev:electron\"",
     "start": "electron .",
-    "package": "npm run build && electron-builder --win nsis"
+    "package": "npm run build && electron-builder --win nsis --publish never"
   },
   "build": {
     "appId": "com.satsugingg.spotifly",
