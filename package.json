@@ -28,6 +28,11 @@
       "dist/**/*",
       "package.json"
     ],
+    "asarUnpack": [
+      "dist/main/gsmtc-daemon.ps1",
+      "dist/main/gsmtc-cmd.ps1",
+      "dist/main/media_keys.exe"
+    ],
     "protocols": [
       {
         "name": "spoti-fly",

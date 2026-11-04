@@ -44,6 +44,26 @@ export class GsmtcBridge {
 
   private getScriptPath(filename: string): string {
     const p1 = path.resolve(__dirname, filename);
+    const unpacked = p1.replace('app.asar', 'app.asar.unpacked');
+    if (fs.existsSync(unpacked)) return unpacked;
+
+    // Automatic extraction fallback: if bundled in app.asar, extract to userData scripts folder
+    try {
+      const appData = process.env.APPDATA || process.env.USERPROFILE || '';
+      if (appData) {
+        const scriptsDir = path.join(appData, 'spoti-fly', 'scripts');
+        if (!fs.existsSync(scriptsDir)) {
+          fs.mkdirSync(scriptsDir, { recursive: true });
+        }
+        const targetPath = path.join(scriptsDir, filename);
+        if (fs.existsSync(p1)) {
+          const content = fs.readFileSync(p1);
+          fs.writeFileSync(targetPath, content);
+          return targetPath;
+        }
+      }
+    } catch {}
+
     if (fs.existsSync(p1)) return p1;
     const p2 = path.resolve(process.cwd(), 'src/main', filename);
     if (fs.existsSync(p2)) return p2;
