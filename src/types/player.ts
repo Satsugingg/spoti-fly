@@ -22,6 +22,7 @@ export interface SpotiflySettings {
   minimalMode?: boolean;
   opacity?: number;
   spotifyClientId?: string;
+  startOnBoot?: boolean;
 }
 
 export interface SpotifyTokens {

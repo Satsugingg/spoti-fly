@@ -38,6 +38,7 @@ export const App: React.FC = () => {
     alwaysOnTop: true,
     showMarquee: true,
     minimalMode: false,
+    startOnBoot: true,
   });
 
   const [track, setTrack] = useState<TrackState>(INITIAL_LOADING_TRACK);

@@ -19,12 +19,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateSettings,
 }) => {
   const [hasShortcut, setHasShortcut] = useState(false);
-  const [startOnBoot, setStartOnBoot] = useState(true);
+
+  const isStartOnBoot = settings.startOnBoot !== false;
 
   useEffect(() => {
     if (isOpen && window.spotifly) {
       window.spotifly.hasDesktopShortcut?.().then((exists) => setHasShortcut(Boolean(exists)));
-      window.spotifly.getStartOnBoot?.().then((boot) => setStartOnBoot(Boolean(boot)));
+      window.spotifly.getStartOnBoot?.().then((boot) => {
+        if (typeof boot === 'boolean' && boot !== settings.startOnBoot) {
+          onUpdateSettings({ startOnBoot: boot });
+        }
+      });
     }
   }, [isOpen]);
 
@@ -45,10 +50,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleToggleStartOnBoot = async () => {
-    if (!window.spotifly) return;
-    const next = !startOnBoot;
-    await window.spotifly.setStartOnBoot?.(next);
-    setStartOnBoot(next);
+    const next = !isStartOnBoot;
+    onUpdateSettings({ startOnBoot: next });
+    if (window.spotifly?.setStartOnBoot) {
+      await window.spotifly.setStartOnBoot(next);
+    }
   };
 
   return (
@@ -219,7 +225,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               type="button"
               onClick={handleToggleStartOnBoot}
               className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start justify-between gap-3 ${
-                startOnBoot
+                isStartOnBoot
                   ? 'bg-emerald-500/10 border-emerald-500/40'
                   : 'bg-zinc-800/50 border-white/5 hover:bg-zinc-800'
               }`}
@@ -228,7 +234,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <Power
                     size={14}
-                    className={startOnBoot ? 'text-emerald-400' : 'text-zinc-400'}
+                    className={isStartOnBoot ? 'text-emerald-400' : 'text-zinc-400'}
                   />
                   <span className="font-semibold text-[12px] text-white">
                     Start with Windows
@@ -242,12 +248,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Toggle Pill Switch */}
               <div
                 className={`shrink-0 w-8 h-4.5 rounded-full p-0.5 transition-colors mt-0.5 flex items-center ${
-                  startOnBoot ? 'bg-[#1DB954]' : 'bg-zinc-700'
+                  isStartOnBoot ? 'bg-[#1DB954]' : 'bg-zinc-700'
                 }`}
               >
                 <div
                   className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
-                    startOnBoot ? 'translate-x-3.5' : 'translate-x-0'
+                    isStartOnBoot ? 'translate-x-3.5' : 'translate-x-0'
                   }`}
                 />
               </div>

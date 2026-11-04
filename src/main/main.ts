@@ -84,7 +84,23 @@ const defaultSettings: SpotiflySettings = {
   showMarquee: true,
   minimalMode: false,
   opacity: 100,
+  startOnBoot: true,
 };
+
+function applyStartOnBoot(enabled: boolean) {
+  try {
+    if (app.isPackaged) {
+      app.setLoginItemSettings({
+        openAtLogin: enabled,
+        path: process.execPath,
+        args: ['--autostart'],
+      });
+      logDebug(`[AUTOSTART] Applied openAtLogin: ${enabled}`);
+    }
+  } catch (err: any) {
+    logDebug(`[AUTOSTART] Login item update error: ${err?.message}`);
+  }
+}
 
 function loadSettings(): SpotiflySettings {
   try {
@@ -100,8 +116,13 @@ function saveSettings(settings: Partial<SpotiflySettings>) {
   try {
     const current = loadSettings();
     const updated = { ...current, ...settings };
+    if (typeof settings.startOnBoot === 'boolean') {
+      applyStartOnBoot(settings.startOnBoot);
+    }
     fs.writeFileSync(configPath, JSON.stringify(updated, null, 2), 'utf8');
-  } catch {}
+  } catch (err) {
+    logDebug(`[CONFIG] Failed to save settings: ${err}`);
+  }
 }
 
 const tokensPath = path.join(app.getPath('userData'), 'spotify-tokens.json');
@@ -697,8 +718,10 @@ ipcMain.handle('shortcut:create-desktop', () => {
 ipcMain.handle('shortcut:check-desktop', () => {
   try {
     const desktopPath = app.getPath('desktop');
-    const shortcutPath = path.join(desktopPath, 'Spoti-Fly.lnk');
-    return fs.existsSync(shortcutPath);
+    return (
+      fs.existsSync(path.join(desktopPath, 'Spoti-Fly.lnk')) ||
+      fs.existsSync(path.join(desktopPath, 'Spotifly.lnk'))
+    );
   } catch {
     return false;
   }
@@ -707,10 +730,10 @@ ipcMain.handle('shortcut:check-desktop', () => {
 ipcMain.handle('shortcut:remove-desktop', () => {
   try {
     const desktopPath = app.getPath('desktop');
-    const shortcutPath = path.join(desktopPath, 'Spoti-Fly.lnk');
-    if (fs.existsSync(shortcutPath)) {
-      fs.unlinkSync(shortcutPath);
-    }
+    const p1 = path.join(desktopPath, 'Spoti-Fly.lnk');
+    const p2 = path.join(desktopPath, 'Spotifly.lnk');
+    if (fs.existsSync(p1)) fs.unlinkSync(p1);
+    if (fs.existsSync(p2)) fs.unlinkSync(p2);
     return true;
   } catch {
     return false;
@@ -718,26 +741,27 @@ ipcMain.handle('shortcut:remove-desktop', () => {
 });
 
 ipcMain.handle('app:get-start-on-boot', () => {
+  const settings = loadSettings();
+  if (typeof settings.startOnBoot === 'boolean') {
+    return settings.startOnBoot;
+  }
   try {
-    const settings = app.getLoginItemSettings();
-    return settings.openAtLogin;
+    if (app.isPackaged) {
+      const login = app.getLoginItemSettings({
+        path: process.execPath,
+        args: ['--autostart'],
+      });
+      return login.openAtLogin;
+    }
+    return true;
   } catch {
-    return false;
+    return true;
   }
 });
 
 ipcMain.handle('app:set-start-on-boot', (_event, enabled: boolean) => {
-  try {
-    app.setLoginItemSettings({
-      openAtLogin: enabled,
-      path: process.execPath,
-      args: ['--autostart'],
-    });
-    return enabled;
-  } catch (err) {
-    logDebug(`[AUTOSTART] setLoginItemSettings error: ${err}`);
-    return false;
-  }
+  saveSettings({ startOnBoot: enabled });
+  return enabled;
 });
 
 function startLocalHttpBridge() {
