@@ -39,7 +39,7 @@ export const CompactBar: React.FC<CompactBarProps> = ({
               }}
             />
           ) : (
-            <img src={logoUrl} alt="Spotifly" className="w-5 h-auto object-contain opacity-70" />
+            <img src={logoUrl} alt="Spoti-Fly" className="w-5 h-auto object-contain opacity-70" />
           )}
         </div>
 
@@ -52,7 +52,7 @@ export const CompactBar: React.FC<CompactBarProps> = ({
             className="text-[9px] text-zinc-300/80 font-normal truncate leading-tight mt-0.5"
             title={track.artist}
           >
-            {track.artist || 'Spotifly'}
+            {track.artist || 'Spoti-Fly'}
           </p>
         </div>
       </div>

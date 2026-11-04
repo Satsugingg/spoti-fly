@@ -20,7 +20,7 @@
   },
   "build": {
     "appId": "com.satsugingg.spotifly",
-    "productName": "Spotifly",
+    "productName": "Spoti-Fly",
     "directories": {
       "output": "release"
     },
@@ -53,7 +53,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Spotifly",
+      "shortcutName": "Spoti-Fly",
       "installerIcon": "assets/installer/icon.ico",
       "uninstallerIcon": "assets/installer/icon.ico",
       "installerHeader": "assets/installer/installerHeader.bmp",

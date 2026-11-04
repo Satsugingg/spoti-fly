@@ -136,7 +136,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             ) : (
               <img
                 src={logoUrl}
-                alt="Spotifly"
+                alt="Spoti-Fly"
                 className="w-5 h-auto object-contain opacity-50 animate-pulse"
               />
             )}
@@ -198,7 +198,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               <div className="flex flex-col items-center justify-center p-2">
                 <img
                   src={logoUrl}
-                  alt="Spotifly"
+                  alt="Spoti-Fly"
                   className={`h-auto object-contain opacity-60 animate-pulse transition-all duration-300 ${
                     isShrunk ? 'w-6' : 'w-8'
                   }`}

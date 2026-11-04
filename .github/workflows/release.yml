@@ -1,4 +1,4 @@
-name: Release Spotifly
+name: Release Spoti-Fly
 
 on:
   push:

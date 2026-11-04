@@ -41,8 +41,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
           <span className="font-semibold text-white tracking-wide flex items-center gap-2">
-            <img src={logoUrl} alt="spoti-fly" className="h-3.5 w-auto object-contain" />
-            spoti-fly Settings
+            <img src={logoUrl} alt="Spoti-Fly" className="h-3.5 w-auto object-contain" />
+            Spoti-Fly Settings
           </span>
           <button
             onClick={onClose}

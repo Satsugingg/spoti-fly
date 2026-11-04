@@ -1,43 +1,43 @@
-# Spotifly 🎵🪽
+# Spoti-Fly 🎵🪽
 
 > **Ultra-Lightweight, Always-on-Top Floating Spotify Mini-Player for Windows with Glassmorphic Physics and GSMTC Native Sync.**
 
 <p align="center">
-  <img src="public/cover.png" alt="Spotifly Cover" width="560" style="border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+  <img src="public/cover.png" alt="Spoti-Fly Cover" width="560" style="border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
 </p>
 
 <p align="center">
   <a href="https://github.com/Satsugingg/spoti-fly/releases/latest">
-    <img src="https://img.shields.io/badge/Download-Spotifly_Setup.exe-1DB954?style=for-the-badge&logo=windows&logoColor=black" alt="Download Spotifly for Windows" />
+    <img src="https://img.shields.io/badge/Download-Spoti--Fly_Setup.exe-1DB954?style=for-the-badge&logo=windows&logoColor=white" alt="Download Spoti-Fly for Windows" />
   </a>
   <a href="https://github.com/Satsugingg/spoti-fly/releases">
-    <img src="https://img.shields.io/github/v/tag/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Version" alt="Version v1.1.1" />
+    <img src="https://img.shields.io/github/v/release/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Release" alt="Release v1.1.1" />
   </a>
-  <img src="https://img.shields.io/badge/Platform-Windows%2010%20%26%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Platform: Windows 10 & 11" />
-  <img src="https://img.shields.io/badge/Spotify-Vanilla%20%7C%20Store%20%7C%20Web-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Spotify: Vanilla, Store, Web" />
+  <img src="https://img.shields.io/badge/Platform-Windows_10_%26_11-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Platform: Windows 10 & 11" />
+  <img src="https://img.shields.io/badge/Spotify-Vanilla_%7C_Store_%7C_Web-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Spotify: Vanilla | Store | Web" />
 </p>
 
 ---
 
 ## 🎧 Works with All Forms of Spotify (No Mods Needed!)
 
-Spotifly works straight out of the box with **any** Spotify setup — zero configuration, zero patches, and zero developer accounts required:
+Spoti-Fly works straight out of the box with **any** Spotify setup — zero configuration, zero patches, and zero developer accounts required:
 
 * ✅ **Official Vanilla Spotify Desktop:** The standard Spotify installer downloaded from [spotify.com](https://spotify.com).
 * ✅ **Microsoft Store Edition:** Spotify installed directly from the Windows Microsoft Store.
 * ✅ **Web Player:** Spotify running inside Chrome, Edge, Brave, or Firefox.
 * ✅ **Modded / Spicetify Clients:** Seamlessly compatible with any custom theme or modified setup.
 
-> **How it works:** Spotifly connects directly to Windows Global System Media Transport Controls (GSMTC). It reads live track metadata natively from the operating system, meaning it never touches or alters Spotify's files.
+> **How it works:** Spoti-Fly connects directly to Windows Global System Media Transport Controls (GSMTC). It reads live track metadata natively from the operating system, meaning it never touches or alters Spotify's files.
 
 ---
 
 ## 🚀 Quick Download & Install (For Everyone)
 
 1. Download the latest installer from **[Releases](https://github.com/Satsugingg/spoti-fly/releases/latest)**:
-   * **`Spotifly Setup.exe`**
+   * **`Spoti-Fly Setup.exe`**
 2. Run the installer and choose your shortcut preferences (Desktop & Start Menu).
-3. **Done!** Spotifly opens on your screen, hovers over all your apps and games, and automatically syncs live with Spotify playback. It starts quietly with Windows on every boot so it's always ready.
+3. **Done!** Spoti-Fly opens on your screen, hovers over all your apps and games, and automatically syncs live with Spotify playback. It starts quietly with Windows on every boot so it's always ready.
 
 ---
 
@@ -56,7 +56,7 @@ Spotifly works straight out of the box with **any** Spotify setup — zero confi
 
 ## 🛠️ Developer Setup & Building from Source
 
-If you want to contribute or build Spotifly from source:
+If you want to contribute or build Spoti-Fly from source:
 
 ### Prerequisites
 * Windows 10 / 11
@@ -80,7 +80,7 @@ npm run dev
 npm run package
 ```
 
-The compiled installer will be generated in `release/Spotifly Setup 1.0.0.exe`.
+The compiled installer will be generated in `release/Spoti-Fly Setup 1.0.0.exe`.
 
 ---
 

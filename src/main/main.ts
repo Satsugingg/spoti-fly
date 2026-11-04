@@ -157,7 +157,7 @@ function createWindow() {
   const initialY = Math.max(20, screenH - initialHeight - 80);
 
   mainWindow = new BrowserWindow({
-    title: 'spoti-fly',
+    title: 'Spoti-Fly',
     icon: !appIcon.isEmpty() ? appIcon : undefined,
     width: 320,
     height: initialHeight,
@@ -256,11 +256,11 @@ function createWindow() {
 function setupTray() {
   const icon = createTrayIcon();
   tray = new Tray(icon);
-  tray.setToolTip('spoti-fly - Spotify Mini-Player');
+  tray.setToolTip('Spoti-Fly - Spotify Mini-Player');
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Show / Hide spoti-fly',
+      label: 'Show / Hide Spoti-Fly',
       click: () => {
         if (!mainWindow) return;
         if (mainWindow.isVisible()) {
@@ -285,7 +285,7 @@ function setupTray() {
     },
     { type: 'separator' },
     {
-      label: 'Quit Spotifly',
+      label: 'Quit Spoti-Fly',
       click: () => {
         isQuitting = true;
         app.quit();
@@ -605,10 +605,10 @@ ipcMain.handle('spotify:start-auth', async (_event, clientId: string) => {
           res.writeHead(200, { 'Content-Type': 'text/html' });
           res.end(`
             <html>
-              <head><title>Spotifly Authorized</title></head>
+              <head><title>Spoti-Fly Authorized</title></head>
               <body style="font-family: sans-serif; background: #121212; color: #fff; text-align: center; padding: 50px;">
-                <h1 style="color: #1DB954;">Spotifly Connected!</h1>
-                <p>You may close this tab and return to Spotifly.</p>
+                <h1 style="color: #1DB954;">Spoti-Fly Connected!</h1>
+                <p>You may close this tab and return to Spoti-Fly.</p>
                 <script>setTimeout(() => window.close(), 1500);</script>
               </body>
             </html>

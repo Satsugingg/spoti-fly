@@ -33,11 +33,11 @@ export const TopBar: React.FC<TopBarProps> = ({
       <div className="flex items-center gap-1.5">
         <img
           src={logoUrl}
-          alt="spoti-fly"
+          alt="Spoti-Fly"
           className="h-[14px] w-auto object-contain select-none pointer-events-none drop-shadow-[0_1px_3px_rgba(29,185,84,0.4)]"
         />
         <span className="text-xs font-semibold tracking-wide text-white/95 font-sans">
-          spoti-fly
+          Spoti-Fly
         </span>
       </div>
 
@@ -63,7 +63,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Settings Button */}
         <button
           onClick={onOpenSettings}
-          title="spoti-fly Settings & Source"
+          title="Spoti-Fly Settings & Source"
           className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors duration-150"
         >
           <Settings2 size={13} className="stroke-[2.2]" />
@@ -72,7 +72,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Minimize Button */}
         <button
           onClick={onMinimize}
-          title="Minimize spoti-fly"
+          title="Minimize Spoti-Fly"
           className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors duration-150"
         >
           <Minus size={13} className="stroke-[2.5]" />
@@ -81,7 +81,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          title="Close spoti-fly"
+          title="Close Spoti-Fly"
           className="p-1 rounded-md text-zinc-400 hover:text-rose-400 hover:bg-rose-500/15 transition-colors duration-150"
         >
           <X size={14} className="stroke-[2.2]" />
