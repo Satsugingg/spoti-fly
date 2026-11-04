@@ -11,10 +11,24 @@
     <img src="https://img.shields.io/badge/Download-Spotifly_Setup.exe-1DB954?style=for-the-badge&logo=windows&logoColor=black" alt="Download Spotifly for Windows" />
   </a>
   <a href="https://github.com/Satsugingg/spoti-fly/releases">
-    <img src="https://img.shields.io/github/v/tag/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Version" alt="Version v1.1.0" />
+    <img src="https://img.shields.io/github/v/tag/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Version" alt="Version v1.1.1" />
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows%2010%20%26%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Platform: Windows 10 & 11" />
+  <img src="https://img.shields.io/badge/Spotify-Vanilla%20%7C%20Store%20%7C%20Web-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Spotify: Vanilla, Store, Web" />
 </p>
+
+---
+
+## 🎧 Works with All Forms of Spotify (No Mods Needed!)
+
+Spotifly works straight out of the box with **any** Spotify setup — zero configuration, zero patches, and zero developer accounts required:
+
+* ✅ **Official Vanilla Spotify Desktop:** The standard Spotify installer downloaded from [spotify.com](https://spotify.com).
+* ✅ **Microsoft Store Edition:** Spotify installed directly from the Windows Microsoft Store.
+* ✅ **Web Player:** Spotify running inside Chrome, Edge, Brave, or Firefox.
+* ✅ **Modded / Spicetify Clients:** Seamlessly compatible with any custom theme or modified setup.
+
+> **How it works:** Spotifly connects directly to Windows Global System Media Transport Controls (GSMTC). It reads live track metadata natively from the operating system, meaning it never touches or alters Spotify's files.
 
 ---
 
@@ -31,7 +45,7 @@
 
 * 🪟 **Always-on-Top:** Stays visible over full-screen apps, games, IDEs, and browser windows.
 * 🧲 **Fluid Drag Physics:** Exponential lerp motion with zero rubber-banding or stutter.
-* 🎵 **Native Windows GSMTC Sync:** Directly hooks into Windows Media Transport Controls — strictly targets Spotify with zero interference from YouTube or browser tabs.
+* 🎵 **Native Windows GSMTC Sync:** Strictly targets Spotify with zero interference from YouTube or browser audio.
 * 🎨 **Dual Display Modes:**
   * **Standard Mode (130px):** Full album art, marquee title, artist, live glowing scrub bar, and controls.
   * **Ultra-Flat Minimal Mode (72px):** Streamlined single-line layout (`Whisper My Name - Drake`) with elapsed time only.
@@ -47,13 +61,13 @@ If you want to contribute or build Spotifly from source:
 ### Prerequisites
 * Windows 10 / 11
 * [Node.js](https://nodejs.org) (v18+)
-* Spotify Desktop Client
+* Spotify (any version)
 
 ### Building
 
 ```bash
 # Clone the repository
-git clone https://github.com/Satsugingg/spoti-fly.git
+git clone https://github.com/satsugingg/spoti-fly.git
 cd spoti-fly
 
 # Install dependencies
