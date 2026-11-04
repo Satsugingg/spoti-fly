@@ -1,6 +1,6 @@
 {
   "name": "spoti-fly",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Always-on-Top Spotify Mini-Player for Windows",
   "main": "dist/main/main.js",
   "author": "satsugingg",
@@ -51,12 +51,13 @@
       "oneClick": true,
       "perMachine": false,
       "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
+      "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
       "shortcutName": "Spoti-Fly",
       "installerIcon": "assets/installer/icon.ico",
       "uninstallerIcon": "assets/installer/icon.ico",
       "installerHeaderIcon": "assets/installer/icon.ico",
+      "include": "assets/installer/installer.nsh",
       "runAfterFinish": true
     }
   },

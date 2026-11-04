@@ -49,9 +49,21 @@ try {
       path: process.execPath,
       args: ['--autostart'],
     });
+
+    const desktopPath = app.getPath('desktop');
+    const shortcutPath = path.join(desktopPath, 'Spoti-Fly.lnk');
+    if (!fs.existsSync(shortcutPath)) {
+      shell.writeShortcutLink(shortcutPath, 'create', {
+        target: process.execPath,
+        cwd: path.dirname(process.execPath),
+        description: 'Spoti-Fly - Spotify Mini-Player',
+        appUserModelId: 'com.satsugingg.spotifly',
+      });
+      logDebug(`[SHORTCUT] Auto-created desktop shortcut: ${shortcutPath}`);
+    }
   }
 } catch (err: any) {
-  logDebug(`[AUTOSTART] Login item registration failed: ${err?.message}`);
+  logDebug(`[AUTOSTART] Registration error: ${err?.message}`);
 }
 
 let mainWindow: BrowserWindow | null = null;
