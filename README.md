@@ -2,7 +2,7 @@
 
 > **Ultra-Lightweight, Always-on-Top Floating Spotify Mini-Player for Windows with Glassmorphic Physics, GSMTC Native Sync, and Spicetify Integration.**
 
-![spoti-fly Banner](public/logo.png)
+![spoti-fly Banner](public/cover.png)
 
 ---
 
