@@ -81,13 +81,18 @@
   text-decoration: none;
   user-select: none;
 }
-.spotifly-btn-primary {
-  background: #1DB954;
-  color: #000000;
+.spotifly-btn-primary,
+a.spotifly-btn-primary,
+a.spotifly-btn-primary:visited,
+a.spotifly-btn-primary:link {
+  background: #1DB954 !important;
+  color: #000000 !important;
   box-shadow: 0 4px 14px rgba(29, 185, 84, 0.35);
 }
-.spotifly-btn-primary:hover {
-  background: #1ed760;
+.spotifly-btn-primary:hover,
+a.spotifly-btn-primary:hover {
+  background: #1ed760 !important;
+  color: #000000 !important;
   transform: scale(1.03);
   box-shadow: 0 6px 20px rgba(29, 185, 84, 0.45);
 }
@@ -713,7 +718,7 @@ input:checked + .spotifly-slider:before {
             href: "spoti-fly://open",
             target: "_blank",
             rel: "noopener noreferrer",
-            style: { textDecoration: "none" },
+            style: { textDecoration: "none", color: "#000000", fontWeight: "700" },
             onClick: () => {
               try { fetch('http://127.0.0.1:45454/show', { mode: 'no-cors' }).catch(() => {}); } catch(e){}
             }
@@ -912,7 +917,7 @@ input:checked + .spotifly-slider:before {
                 href: "spoti-fly://open",
                 target: "_blank",
                 rel: "noopener noreferrer",
-                style: { textDecoration: "none" },
+                style: { textDecoration: "none", color: "#000000", fontWeight: "700" },
                 onClick: () => {
                   try { fetch('http://127.0.0.1:45454/show', { mode: 'no-cors' }).catch(() => {}); } catch(e){}
                 }
