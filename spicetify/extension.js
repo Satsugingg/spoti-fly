@@ -22,6 +22,7 @@
     try {
       const a = document.createElement('a');
       a.href = 'spoti-fly://open/';
+      a.target = '_blank';
       document.body.appendChild(a);
       a.click();
       a.remove();

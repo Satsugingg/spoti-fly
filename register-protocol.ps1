@@ -9,8 +9,10 @@ $cmdPath = "$keyPath\shell\open\command"
 if (-not (Test-Path $cmdPath)) {
     New-Item -Path $cmdPath -Force | Out-Null
 }
-$vbsPath = Join-Path $PSScriptRoot "launch.vbs"
-$directCommand = "wscript.exe `"$vbsPath`" `"%1`""
+
+$electronExe = Join-Path $PSScriptRoot "node_modules\electron\dist\electron.exe"
+$appPath = $PSScriptRoot
+$directCommand = "`"$electronExe`" `"$appPath`" `"%1`""
 
 Set-ItemProperty -Path $cmdPath -Name "(Default)" -Value $directCommand
 
