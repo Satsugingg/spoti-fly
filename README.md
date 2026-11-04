@@ -32,7 +32,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/<your-username>/spoti-fly.git
+git clone https://github.com/satsugingg/spoti-fly.git
 cd spoti-fly
 
 # Install dependencies & build
@@ -43,7 +43,7 @@ npm run build
 powershell -ExecutionPolicy Bypass -File ./register-protocol.ps1
 ```
 
-You can now start `spoti-fly` anytime by running:
+You can now start `spoti-fly` anytime by:
 * **Double-clicking** `launch.vbs` (silent background launch), or
 * Running `npm start` in your terminal.
 
@@ -54,8 +54,8 @@ You can now start `spoti-fly` anytime by running:
 To add the one-click winged button to your Spotify topbar:
 
 ```powershell
-# In PowerShell from the Spotifly-Spicetify companion directory:
-cd "..\Spotifly-Spicetify"
+# From the root of the cloned spoti-fly directory:
+cd spicetify
 powershell -ExecutionPolicy Bypass -File ./install-to-spicetify.ps1
 ```
 

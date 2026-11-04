@@ -1,0 +1,19 @@
+{
+  "name": "spoti-fly",
+  "version": "1.0.0",
+  "description": "spoti-fly Custom App for Spicetify - Glassmorphic mini-player hub, minimal mode, and floating picture-in-picture inside Spotify.",
+  "main": "index.js",
+  "scripts": {
+    "install:spicetify": "powershell -ExecutionPolicy Bypass -File ./install-to-spicetify.ps1"
+  },
+  "keywords": [
+    "spicetify",
+    "spicetify-apps",
+    "spicetify-custom-app",
+    "spotify",
+    "mini-player",
+    "glassmorphic"
+  ],
+  "author": "Gustas",
+  "license": "MIT"
+}
