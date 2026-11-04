@@ -21,7 +21,7 @@ const INITIAL_LOADING_TRACK: TrackState = {
   timestamp: Date.now(),
 };
 
-const SETTINGS_HEIGHT = 315;
+const SETTINGS_HEIGHT = 440;
 
 export const App: React.FC = () => {
   const [isPinned, setIsPinned] = useState(false);

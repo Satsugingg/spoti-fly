@@ -665,6 +665,69 @@ ipcMain.handle('settings:save', (_event, settings: Partial<SpotiflySettings>) =>
   saveSettings(settings);
 });
 
+ipcMain.handle('shortcut:create-desktop', () => {
+  try {
+    const desktopPath = app.getPath('desktop');
+    const shortcutPath = path.join(desktopPath, 'Spoti-Fly.lnk');
+    const success = shell.writeShortcutLink(shortcutPath, 'create', {
+      target: process.execPath,
+      cwd: path.dirname(process.execPath),
+      description: 'Spoti-Fly - Spotify Mini-Player',
+      appUserModelId: 'com.satsugingg.spotifly',
+    });
+    return success;
+  } catch (err) {
+    logDebug(`[SHORTCUT] Create failed: ${err}`);
+    return false;
+  }
+});
+
+ipcMain.handle('shortcut:check-desktop', () => {
+  try {
+    const desktopPath = app.getPath('desktop');
+    const shortcutPath = path.join(desktopPath, 'Spoti-Fly.lnk');
+    return fs.existsSync(shortcutPath);
+  } catch {
+    return false;
+  }
+});
+
+ipcMain.handle('shortcut:remove-desktop', () => {
+  try {
+    const desktopPath = app.getPath('desktop');
+    const shortcutPath = path.join(desktopPath, 'Spoti-Fly.lnk');
+    if (fs.existsSync(shortcutPath)) {
+      fs.unlinkSync(shortcutPath);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+});
+
+ipcMain.handle('app:get-start-on-boot', () => {
+  try {
+    const settings = app.getLoginItemSettings();
+    return settings.openAtLogin;
+  } catch {
+    return false;
+  }
+});
+
+ipcMain.handle('app:set-start-on-boot', (_event, enabled: boolean) => {
+  try {
+    app.setLoginItemSettings({
+      openAtLogin: enabled,
+      path: process.execPath,
+      args: ['--autostart'],
+    });
+    return enabled;
+  } catch (err) {
+    logDebug(`[AUTOSTART] setLoginItemSettings error: ${err}`);
+    return false;
+  }
+});
+
 function startLocalHttpBridge() {
   const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');

@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, SlidersHorizontal, Eye } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, SlidersHorizontal, Eye, Monitor, Power } from 'lucide-react';
 import { SpotiflySettings } from '../../types/player';
 import logoUrl from '../assets/logo.png';
 
@@ -18,10 +18,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   onUpdateSettings,
 }) => {
+  const [hasShortcut, setHasShortcut] = useState(false);
+  const [startOnBoot, setStartOnBoot] = useState(true);
+
+  useEffect(() => {
+    if (isOpen && window.spotifly) {
+      window.spotifly.hasDesktopShortcut?.().then((exists) => setHasShortcut(Boolean(exists)));
+      window.spotifly.getStartOnBoot?.().then((boot) => setStartOnBoot(Boolean(boot)));
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const isMinimal = Boolean(settings.minimalMode);
   const currentOpacity = typeof settings.opacity === 'number' ? settings.opacity : 100;
+
+  const handleToggleShortcut = async () => {
+    if (!window.spotifly) return;
+    if (hasShortcut) {
+      await window.spotifly.removeDesktopShortcut?.();
+      setHasShortcut(false);
+    } else {
+      const ok = await window.spotifly.createDesktopShortcut?.();
+      if (ok) setHasShortcut(true);
+    }
+  };
+
+  const handleToggleStartOnBoot = async () => {
+    if (!window.spotifly) return;
+    const next = !startOnBoot;
+    await window.spotifly.setStartOnBoot?.(next);
+    setStartOnBoot(next);
+  };
 
   return (
     <div
@@ -52,91 +80,178 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        {/* Minimal Player Mode Toggle */}
-        <div className="mt-2.5">
-          <button
-            type="button"
-            onClick={() => onUpdateSettings({ minimalMode: !isMinimal })}
-            className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start justify-between gap-3 ${
-              isMinimal
-                ? 'bg-emerald-500/10 border-emerald-500/40'
-                : 'bg-zinc-800/50 border-white/5 hover:bg-zinc-800'
-            }`}
-          >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <SlidersHorizontal
-                  size={14}
-                  className={isMinimal ? 'text-emerald-400' : 'text-zinc-400'}
-                />
-                <span className="font-semibold text-[12px] text-white">
-                  Minimal Player Mode
-                </span>
-              </div>
-              <p className="text-[10px] text-zinc-400 leading-tight">
-                Compact view showing album art, track title, artist, and elapsed time only.
-              </p>
-            </div>
-
-            {/* Toggle Pill Switch */}
-            <div
-              className={`shrink-0 w-8 h-4.5 rounded-full p-0.5 transition-colors mt-0.5 flex items-center ${
-                isMinimal ? 'bg-[#1DB954]' : 'bg-zinc-700'
+        {/* Settings List */}
+        <div className="space-y-2 mt-2.5 max-h-[310px] overflow-y-auto pr-0.5">
+          {/* Minimal Player Mode Toggle */}
+          <div>
+            <button
+              type="button"
+              onClick={() => onUpdateSettings({ minimalMode: !isMinimal })}
+              className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start justify-between gap-3 ${
+                isMinimal
+                  ? 'bg-emerald-500/10 border-emerald-500/40'
+                  : 'bg-zinc-800/50 border-white/5 hover:bg-zinc-800'
               }`}
             >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <SlidersHorizontal
+                    size={14}
+                    className={isMinimal ? 'text-emerald-400' : 'text-zinc-400'}
+                  />
+                  <span className="font-semibold text-[12px] text-white">
+                    Minimal Player Mode
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-400 leading-tight">
+                  Compact view with album art, title, and elapsed time only.
+                </p>
+              </div>
+
+              {/* Toggle Pill Switch */}
               <div
-                className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
-                  isMinimal ? 'translate-x-3.5' : 'translate-x-0'
+                className={`shrink-0 w-8 h-4.5 rounded-full p-0.5 transition-colors mt-0.5 flex items-center ${
+                  isMinimal ? 'bg-[#1DB954]' : 'bg-zinc-700'
                 }`}
+              >
+                <div
+                  className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
+                    isMinimal ? 'translate-x-3.5' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </button>
+          </div>
+
+          {/* Window Opacity Slider */}
+          <div className="p-2.5 rounded-xl bg-zinc-800/50 border border-white/5">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <Eye size={14} className="text-emerald-400" />
+                <span className="font-semibold text-[12px] text-white">Window Opacity</span>
+              </div>
+              <span className="text-[11px] font-mono font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                {currentOpacity}%
+              </span>
+            </div>
+
+            {/* Range Slider */}
+            <div className="flex items-center gap-2.5 px-0.5">
+              <input
+                type="range"
+                min="20"
+                max="100"
+                step="5"
+                value={currentOpacity}
+                onChange={(e) => onUpdateSettings({ opacity: Number(e.target.value) })}
+                className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-[#1DB954]"
               />
             </div>
-          </button>
-        </div>
 
-        {/* Window Opacity Slider */}
-        <div className="mt-2 p-2.5 rounded-xl bg-zinc-800/50 border border-white/5">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <Eye size={14} className="text-emerald-400" />
-              <span className="font-semibold text-[12px] text-white">Window Opacity</span>
+            {/* Quick Preset Buttons */}
+            <div className="flex items-center justify-between gap-1.5 mt-2 pt-2 border-t border-white/5">
+              <span className="text-[10px] text-zinc-400">Presets:</span>
+              <div className="flex items-center gap-1">
+                {[40, 60, 80, 100].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => onUpdateSettings({ opacity: preset })}
+                    className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                      currentOpacity === preset
+                        ? 'bg-[#1DB954] text-black font-semibold'
+                        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                    }`}
+                  >
+                    {preset}%
+                  </button>
+                ))}
+              </div>
             </div>
-            <span className="text-[11px] font-mono font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-              {currentOpacity}%
-            </span>
           </div>
 
-          {/* Range Slider */}
-          <div className="flex items-center gap-2.5 px-0.5">
-            <input
-              type="range"
-              min="20"
-              max="100"
-              step="5"
-              value={currentOpacity}
-              onChange={(e) => onUpdateSettings({ opacity: Number(e.target.value) })}
-              className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-[#1DB954]"
-            />
-          </div>
+          {/* Desktop Shortcut Toggle */}
+          <div>
+            <button
+              type="button"
+              onClick={handleToggleShortcut}
+              className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start justify-between gap-3 ${
+                hasShortcut
+                  ? 'bg-emerald-500/10 border-emerald-500/40'
+                  : 'bg-zinc-800/50 border-white/5 hover:bg-zinc-800'
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Monitor
+                    size={14}
+                    className={hasShortcut ? 'text-emerald-400' : 'text-zinc-400'}
+                  />
+                  <span className="font-semibold text-[12px] text-white">
+                    Desktop Shortcut
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-400 leading-tight">
+                  {hasShortcut
+                    ? 'Active on your desktop. Click to remove.'
+                    : 'Click to place a shortcut on your Windows desktop.'}
+                </p>
+              </div>
 
-          {/* Quick Preset Buttons */}
-          <div className="flex items-center justify-between gap-1.5 mt-2 pt-2 border-t border-white/5">
-            <span className="text-[10px] text-zinc-400">Presets:</span>
-            <div className="flex items-center gap-1">
-              {[40, 60, 80, 100].map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => onUpdateSettings({ opacity: preset })}
-                  className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
-                    currentOpacity === preset
-                      ? 'bg-[#1DB954] text-black font-semibold'
-                      : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+              {/* Toggle Pill Switch */}
+              <div
+                className={`shrink-0 w-8 h-4.5 rounded-full p-0.5 transition-colors mt-0.5 flex items-center ${
+                  hasShortcut ? 'bg-[#1DB954]' : 'bg-zinc-700'
+                }`}
+              >
+                <div
+                  className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
+                    hasShortcut ? 'translate-x-3.5' : 'translate-x-0'
                   }`}
-                >
-                  {preset}%
-                </button>
-              ))}
-            </div>
+                />
+              </div>
+            </button>
+          </div>
+
+          {/* Start with Windows Toggle */}
+          <div>
+            <button
+              type="button"
+              onClick={handleToggleStartOnBoot}
+              className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start justify-between gap-3 ${
+                startOnBoot
+                  ? 'bg-emerald-500/10 border-emerald-500/40'
+                  : 'bg-zinc-800/50 border-white/5 hover:bg-zinc-800'
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Power
+                    size={14}
+                    className={startOnBoot ? 'text-emerald-400' : 'text-zinc-400'}
+                  />
+                  <span className="font-semibold text-[12px] text-white">
+                    Start with Windows
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-400 leading-tight">
+                  Quietly start Spoti-Fly when your computer boots up.
+                </p>
+              </div>
+
+              {/* Toggle Pill Switch */}
+              <div
+                className={`shrink-0 w-8 h-4.5 rounded-full p-0.5 transition-colors mt-0.5 flex items-center ${
+                  startOnBoot ? 'bg-[#1DB954]' : 'bg-zinc-700'
+                }`}
+              >
+                <div
+                  className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
+                    startOnBoot ? 'translate-x-3.5' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </button>
           </div>
         </div>
 

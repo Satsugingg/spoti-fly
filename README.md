@@ -36,8 +36,8 @@ Spoti-Fly works straight out of the box with **any** Spotify setup — zero conf
 
 1. Download the latest installer from **[Releases](https://github.com/Satsugingg/spoti-fly/releases/latest)**:
    * **`Spoti-Fly Setup.exe`**
-2. Run the installer and choose your shortcut preferences (Desktop & Start Menu).
-3. **Done!** Spoti-Fly opens on your screen, hovers over all your apps and games, and automatically syncs live with Spotify playback. It starts quietly with Windows on every boot so it's always ready.
+2. Run the installer — **zero wizard steps, zero prompts, zero bloat!** It installs seamlessly in 2 seconds like Discord or Spotify, creates your Desktop & Start Menu shortcuts, and launches Spoti-Fly immediately.
+3. **Done!** Spoti-Fly hovers over your screen, syncs live with Spotify playback, and you can customize desktop shortcuts and auto-start anytime inside the in-app glassmorphic Settings modal.
 
 ---
 

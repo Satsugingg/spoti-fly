@@ -42,6 +42,12 @@ const spotiflyAPI: SpotiflyAPI = {
 
   getSettings: () => ipcRenderer.invoke('settings:get'),
   saveSettings: (settings: Partial<SpotiflySettings>) => ipcRenderer.invoke('settings:save', settings),
+
+  createDesktopShortcut: () => ipcRenderer.invoke('shortcut:create-desktop'),
+  hasDesktopShortcut: () => ipcRenderer.invoke('shortcut:check-desktop'),
+  removeDesktopShortcut: () => ipcRenderer.invoke('shortcut:remove-desktop'),
+  getStartOnBoot: () => ipcRenderer.invoke('app:get-start-on-boot'),
+  setStartOnBoot: (enabled: boolean) => ipcRenderer.invoke('app:set-start-on-boot', enabled),
 };
 
 contextBridge.exposeInMainWorld('spotifly', spotiflyAPI);

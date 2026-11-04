@@ -63,6 +63,13 @@ export interface SpotiflyAPI {
   // Settings
   getSettings: () => Promise<SpotiflySettings>;
   saveSettings: (settings: Partial<SpotiflySettings>) => Promise<void>;
+
+  // System & Shortcuts
+  createDesktopShortcut: () => Promise<boolean>;
+  hasDesktopShortcut: () => Promise<boolean>;
+  removeDesktopShortcut: () => Promise<boolean>;
+  getStartOnBoot: () => Promise<boolean>;
+  setStartOnBoot: (enabled: boolean) => Promise<boolean>;
 }
 
 declare global {

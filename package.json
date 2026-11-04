@@ -48,17 +48,15 @@
       "icon": "assets/installer/icon.ico"
     },
     "nsis": {
-      "oneClick": false,
+      "oneClick": true,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Spoti-Fly",
       "installerIcon": "assets/installer/icon.ico",
       "uninstallerIcon": "assets/installer/icon.ico",
-      "installerHeader": "assets/installer/installerHeader.bmp",
-      "installerSidebar": "assets/installer/installerSidebar.bmp",
-      "uninstallerSidebar": "assets/installer/uninstallerSidebar.bmp",
+      "installerHeaderIcon": "assets/installer/icon.ico",
       "runAfterFinish": true
     }
   },
