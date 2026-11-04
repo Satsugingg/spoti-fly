@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build output
+dist/
+build/
+release/
+
+# Logs & Debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+spotifly-debug.log
+
+# User Data & Tokens
+spotifly-settings.json
+spotify-tokens.json
+
+# Environment & OS
+.env
+.env.local
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

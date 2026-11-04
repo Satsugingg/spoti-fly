@@ -1,0 +1,92 @@
+import React from 'react';
+import { Pin, X, Settings2, Minus } from 'lucide-react';
+import logoUrl from '../assets/logo.png';
+
+interface TopBarProps {
+  isPinned: boolean;
+  onTogglePin: () => void;
+  onMinimize?: () => void;
+  onClose: () => void;
+  onOpenSettings: () => void;
+  mode: 'gsmtc' | 'spotify' | 'demo';
+  isVisible?: boolean;
+}
+
+export const TopBar: React.FC<TopBarProps> = ({
+  isPinned,
+  onTogglePin,
+  onMinimize,
+  onClose,
+  onOpenSettings,
+  mode,
+  isVisible = true,
+}) => {
+  return (
+    <header
+      className={`app-drag w-full flex items-center justify-between px-3 text-white select-none transition-all duration-300 ease-out ${
+        isVisible
+          ? 'max-h-8 opacity-60 hover:opacity-100 pt-1 pb-0.5 pointer-events-auto'
+          : 'max-h-0 opacity-0 py-0 overflow-hidden pointer-events-none'
+      }`}
+    >
+      {/* Left: Branding */}
+      <div className="flex items-center gap-1.5">
+        <img
+          src={logoUrl}
+          alt="spoti-fly"
+          className="h-[14px] w-auto object-contain select-none pointer-events-none drop-shadow-[0_1px_3px_rgba(29,185,84,0.4)]"
+        />
+        <span className="text-xs font-semibold tracking-wide text-white/95 font-sans">
+          spoti-fly
+        </span>
+      </div>
+
+      {/* Right: Window Controls */}
+      <div className="app-no-drag flex items-center gap-1">
+        {/* Pin Window Down Button (Locks position & always-on-top) */}
+        <button
+          onClick={onTogglePin}
+          title={
+            isPinned
+              ? 'Window Pinned Down (Position locked — click to unlock & drag)'
+              : 'Window Unpinned (Draggable — click to pin down)'
+          }
+          className={`p-1 rounded-md transition-all duration-200 ${
+            isPinned
+              ? 'text-emerald-400 bg-emerald-500/20 hover:bg-emerald-500/30 ring-1 ring-emerald-500/40 rotate-45'
+              : 'text-zinc-400 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          <Pin size={13} className="stroke-[2.2]" />
+        </button>
+
+        {/* Settings Button */}
+        <button
+          onClick={onOpenSettings}
+          title="spoti-fly Settings & Source"
+          className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors duration-150"
+        >
+          <Settings2 size={13} className="stroke-[2.2]" />
+        </button>
+
+        {/* Minimize Button */}
+        <button
+          onClick={onMinimize}
+          title="Minimize spoti-fly"
+          className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors duration-150"
+        >
+          <Minus size={13} className="stroke-[2.5]" />
+        </button>
+
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          title="Close spoti-fly"
+          className="p-1 rounded-md text-zinc-400 hover:text-rose-400 hover:bg-rose-500/15 transition-colors duration-150"
+        >
+          <X size={14} className="stroke-[2.2]" />
+        </button>
+      </div>
+    </header>
+  );
+};

@@ -1,0 +1,41 @@
+{
+  "name": "spoti-fly",
+  "version": "1.0.0",
+  "description": "Always-on-Top Spotify Mini-Player for Windows",
+  "main": "dist/main/main.js",
+  "author": "Antigravity",
+  "license": "MIT",
+  "scripts": {
+    "clean": "node -e \"const fs = require('fs'); fs.rmSync('dist', { recursive: true, force: true });\"",
+    "copy:daemon": "node -e \"const fs = require('fs'); fs.mkdirSync('dist/main', { recursive: true }); fs.copyFileSync('src/main/gsmtc-daemon.ps1', 'dist/main/gsmtc-daemon.ps1'); if (fs.existsSync('src/main/gsmtc-cmd.ps1')) fs.copyFileSync('src/main/gsmtc-cmd.ps1', 'dist/main/gsmtc-cmd.ps1'); if (fs.existsSync('src/main/media_keys.exe')) fs.copyFileSync('src/main/media_keys.exe', 'dist/main/media_keys.exe'); if (fs.existsSync('public/logo.png')) fs.copyFileSync('public/logo.png', 'dist/main/logo.png');\"",
+    "build:electron": "tsc -p tsconfig.electron.json && npm run copy:daemon",
+    "build:renderer": "vite build",
+    "build": "npm run clean && npm run build:electron && npm run build:renderer",
+    "typecheck": "tsc --noEmit",
+    "dev:renderer": "vite",
+    "dev:electron": "wait-on http://localhost:5173 && electron .",
+    "dev": "npm run build:electron && concurrently -k \"npm run dev:renderer\" \"tsc -p tsconfig.electron.json --watch\" \"npm run dev:electron\"",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "lucide-react": "^1.67.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.4",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "autoprefixer": "^10.6.2",
+    "concurrently": "^10.0.6",
+    "cross-env": "^10.1.0",
+    "electron": "^45.2.1",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^4.3.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "wait-on": "^9.5.1"
+  }
+}

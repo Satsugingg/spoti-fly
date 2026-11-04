@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .app-drag {
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .app-drag:active {
+    cursor: grabbing;
+  }
+  .app-no-drag {
+    cursor: default;
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  20% {
+    transform: translateX(0%);
+  }
+  80% {
+    transform: translateX(calc(-100% + 180px));
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 8s ease-in-out infinite alternate;
+}
+
+/* Custom glow effects for Spotify player */
+.spotify-glow {
+  box-shadow: 0 0 12px rgba(29, 185, 84, 0.45);
+}
+
+.spotify-glow-lg {
+  box-shadow: 0 0 20px rgba(29, 185, 84, 0.6);
+}
+
+/* Glass card border and background */
+.glass-panel {
+  background: rgba(18, 18, 18, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Custom smooth slider */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+}
