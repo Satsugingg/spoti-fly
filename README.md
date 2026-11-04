@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://github.com/Satsugingg/spoti-fly/releases/latest">
-    <img src="https://img.shields.io/badge/Download-Spotifly%20Setup%20(.exe)-1DB954?style=for-the-badge&logo=windows&logoColor=black" alt="Download Spotifly for Windows" />
+    <img src="https://img.shields.io/badge/Download-Spotifly_Setup.exe-1DB954?style=for-the-badge&logo=windows&logoColor=black" alt="Download Spotifly for Windows" />
   </a>
   <a href="https://github.com/Satsugingg/spoti-fly/releases">
-    <img src="https://img.shields.io/github/v/release/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Latest%20Release" alt="Latest Release" />
+    <img src="https://img.shields.io/github/v/tag/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Version" alt="Version v1.1.0" />
   </a>
-  <img src="https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-blue?style=for-the-badge" alt="Platform: Windows" />
+  <img src="https://img.shields.io/badge/Platform-Windows%2010%20%26%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Platform: Windows 10 & 11" />
 </p>
 
 ---
