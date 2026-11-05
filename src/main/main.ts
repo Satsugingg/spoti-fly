@@ -102,6 +102,7 @@ const defaultSettings: SpotiflySettings = {
   enableEdgeSnapping: true,
   showUpNextPreview: true,
   showLyrics: false,
+  showKaraokeButton: true,
 };
 
 function applyStartOnBoot(enabled: boolean) {

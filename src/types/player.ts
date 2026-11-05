@@ -40,6 +40,7 @@ export interface SpotiflySettings {
   enableEdgeSnapping?: boolean;
   showUpNextPreview?: boolean;
   showLyrics?: boolean;
+  showKaraokeButton?: boolean;
 }
 
 export interface SpotifyTokens {

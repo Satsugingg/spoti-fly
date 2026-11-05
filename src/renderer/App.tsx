@@ -64,6 +64,7 @@ export const App: React.FC = () => {
     enableEdgeSnapping: true,
     showUpNextPreview: true,
     showLyrics: false,
+    showKaraokeButton: true,
   });
 
   const [track, setTrack] = useState<TrackState>(INITIAL_LOADING_TRACK);
@@ -437,6 +438,9 @@ export const App: React.FC = () => {
     if (window.spotifly) {
       window.spotifly.saveSettings(newSettings);
     }
+    if (newSettings.showKaraokeButton === false && isLyricsOpenRef.current) {
+      handleToggleLyrics();
+    }
     if (!isSettingsOpenRef.current && !isLyricsOpenRef.current && typeof newSettings.minimalMode === 'boolean') {
       const h = isHoveredRef.current
         ? getFullHeight(newSettings.minimalMode)
@@ -621,7 +625,7 @@ export const App: React.FC = () => {
               mode={settings.mode}
               isVisible={isLyricsOpen || !isShrunk}
               isLyricsOpen={isLyricsOpen}
-              onToggleLyrics={handleToggleLyrics}
+              onToggleLyrics={settings.showKaraokeButton !== false ? handleToggleLyrics : undefined}
             />
           </div>
 
@@ -640,7 +644,7 @@ export const App: React.FC = () => {
               showUpNextPreview={settings.showUpNextPreview !== false}
               onFetchUpNext={handleFetchUpNext}
               isLyricsOpen={isLyricsOpen}
-              onToggleLyrics={handleToggleLyrics}
+              onToggleLyrics={settings.showKaraokeButton !== false ? handleToggleLyrics : undefined}
             />
           </div>
 
