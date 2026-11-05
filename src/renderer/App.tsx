@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TopBar } from './components/TopBar';
 import { PlayerCard } from './components/PlayerCard';
-import { SettingsModal } from './components/SettingsModal';
+import { SettingsModal, DEFAULT_HOTKEYS } from './components/SettingsModal';
 import { LyricsDrawer } from './components/LyricsDrawer';
 import { VolumeHud } from './components/VolumeHud';
-import { TrackState, SpotiflySettings, DEFAULT_HOTKEYS } from '../types/player';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { TrackState, SpotiflySettings } from '../types/player';
 import { spotifyApi } from './services/spotifyPkce';
 
 // Default initial loading track (Clean state before media connects)
@@ -664,13 +665,15 @@ export const App: React.FC = () => {
         />
 
         {/* Settings Modal */}
-        <SettingsModal
-          isOpen={isSettingsOpen}
-          isClosing={isSettingsClosing}
-          onClose={handleCloseSettings}
-          settings={settings}
-          onUpdateSettings={handleUpdateSettings}
-        />
+        <ErrorBoundary>
+          <SettingsModal
+            isOpen={isSettingsOpen}
+            isClosing={isSettingsClosing}
+            onClose={handleCloseSettings}
+            settings={settings}
+            onUpdateSettings={handleUpdateSettings}
+          />
+        </ErrorBoundary>
       </div>
     </div>
   );

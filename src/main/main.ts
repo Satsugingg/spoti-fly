@@ -4,7 +4,7 @@ import fs from 'fs';
 import http from 'http';
 import { execFile } from 'child_process';
 import { GsmtcBridge } from './gsmtc-bridge';
-import { SpotiflySettings, SpotifyTokens, TrackState, DEFAULT_HOTKEYS, HotkeyConfig } from '../types/player';
+import { SpotiflySettings, SpotifyTokens, TrackState, HotkeyConfig } from '../types/player';
 
 const logFile = path.join(app.getPath('userData'), 'spotifly-debug.log');
 function logDebug(msg: string) {
@@ -79,6 +79,15 @@ let heightAnimTimer: NodeJS.Timeout | null = null;
 let animResolve: (() => void) | null = null;
 
 const configPath = path.join(app.getPath('userData'), 'spotifly-settings.json');
+
+const DEFAULT_HOTKEYS: Required<HotkeyConfig> = {
+  playPause: 'CommandOrControl+Alt+Space',
+  nextTrack: 'CommandOrControl+Alt+Right',
+  prevTrack: 'CommandOrControl+Alt+Left',
+  volumeUp: 'CommandOrControl+Alt+Up',
+  volumeDown: 'CommandOrControl+Alt+Down',
+  toggleWindow: 'CommandOrControl+Alt+H',
+};
 
 const defaultSettings: SpotiflySettings = {
   mode: 'gsmtc',

@@ -24,15 +24,6 @@ export interface HotkeyConfig {
   toggleWindow?: string;
 }
 
-export const DEFAULT_HOTKEYS: Required<HotkeyConfig> = {
-  playPause: 'CommandOrControl+Alt+Space',
-  nextTrack: 'CommandOrControl+Alt+Right',
-  prevTrack: 'CommandOrControl+Alt+Left',
-  volumeUp: 'CommandOrControl+Alt+Up',
-  volumeDown: 'CommandOrControl+Alt+Down',
-  toggleWindow: 'CommandOrControl+Alt+H',
-};
-
 export interface SpotiflySettings {
   mode: 'gsmtc' | 'spotify' | 'demo';
   alwaysOnTop: boolean;

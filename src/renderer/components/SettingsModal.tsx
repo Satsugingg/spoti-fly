@@ -11,8 +11,17 @@ import {
   SkipForward,
   RotateCcw,
 } from 'lucide-react';
-import { SpotiflySettings, DEFAULT_HOTKEYS, HotkeyConfig } from '../../types/player';
+import { SpotiflySettings, HotkeyConfig } from '../../types/player';
 import logoUrl from '../assets/logo.png';
+
+export const DEFAULT_HOTKEYS: Required<HotkeyConfig> = {
+  playPause: 'CommandOrControl+Alt+Space',
+  nextTrack: 'CommandOrControl+Alt+Right',
+  prevTrack: 'CommandOrControl+Alt+Left',
+  volumeUp: 'CommandOrControl+Alt+Up',
+  volumeDown: 'CommandOrControl+Alt+Down',
+  toggleWindow: 'CommandOrControl+Alt+H',
+};
 
 interface HotkeyActionItem {
   id: keyof HotkeyConfig;
@@ -309,10 +318,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
 
                 {HOTKEY_ACTIONS.map(({ id, label }) => {
-                  const currentHotkeys = { ...DEFAULT_HOTKEYS, ...(settings.hotkeys || {}) };
-                  const currentVal = currentHotkeys[id];
+                  const currentHotkeys = { ...DEFAULT_HOTKEYS, ...(settings?.hotkeys || {}) };
+                  const currentVal = currentHotkeys?.[id] ?? DEFAULT_HOTKEYS?.[id] ?? '';
                   const isRecording = recordingAction === id;
-                  const isDefault = currentVal === DEFAULT_HOTKEYS[id];
+                  const isDefault = currentVal === (DEFAULT_HOTKEYS?.[id] ?? '');
 
                   return (
                     <div
