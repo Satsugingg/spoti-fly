@@ -176,6 +176,62 @@ function createTrayIcon(): Electron.NativeImage {
   return nativeImage.createEmpty();
 }
 
+let savePosTimer: NodeJS.Timeout | null = null;
+
+function saveWindowPosition(x: number, y: number) {
+  if (savePosTimer) clearTimeout(savePosTimer);
+  savePosTimer = setTimeout(() => {
+    saveSettings({ windowX: Math.round(x), windowY: Math.round(y) });
+    logDebug(`[POSITION] Saved window position: ${Math.round(x)}, ${Math.round(y)}`);
+  }, 250);
+}
+
+function flushWindowPosition() {
+  if (savePosTimer) {
+    clearTimeout(savePosTimer);
+    savePosTimer = null;
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const [x, y] = mainWindow.getPosition();
+    saveSettings({ windowX: Math.round(x), windowY: Math.round(y) });
+    logDebug(`[POSITION] Flushed window position: ${Math.round(x)}, ${Math.round(y)}`);
+  }
+}
+
+function getSavedOrInitialPosition(
+  savedX?: number,
+  savedY?: number,
+  width: number = 320,
+  height: number = 130
+): { x: number; y: number } {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenW, height: screenH } = primaryDisplay.workAreaSize;
+  const defaultX = Math.max(20, screenW - 360);
+  const defaultY = Math.max(20, screenH - height - 80);
+
+  if (typeof savedX !== 'number' || typeof savedY !== 'number') {
+    return { x: defaultX, y: defaultY };
+  }
+
+  // Ensure position is visible within the work area of at least one connected display
+  const allDisplays = screen.getAllDisplays();
+  const isVisible = allDisplays.some((display) => {
+    const { x, y, width: dW, height: dH } = display.workArea;
+    return (
+      savedX + width > x + 40 &&
+      savedX < x + dW - 40 &&
+      savedY + height > y + 40 &&
+      savedY < y + dH - 40
+    );
+  });
+
+  if (isVisible) {
+    return { x: Math.round(savedX), y: Math.round(savedY) };
+  }
+
+  return { x: defaultX, y: defaultY };
+}
+
 function createWindow() {
   const settings = loadSettings();
   isAlwaysOnTop = true; // Always default to true so it stays visible on top of Spotify
@@ -184,10 +240,17 @@ function createWindow() {
   targetHeight = initialHeight;
   currentHeight = initialHeight;
 
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width: screenW, height: screenH } = primaryDisplay.workAreaSize;
-  const initialX = Math.max(20, screenW - 360);
-  const initialY = Math.max(20, screenH - initialHeight - 80);
+  const { x: initialX, y: initialY } = getSavedOrInitialPosition(
+    settings.windowX,
+    settings.windowY,
+    320,
+    initialHeight
+  );
+
+  currentX = initialX;
+  currentY = initialY;
+  targetX = initialX;
+  targetY = initialY;
 
   mainWindow = new BrowserWindow({
     title: 'Spoti-Fly',
@@ -259,8 +322,17 @@ function createWindow() {
     logDebug(`[RENDERER] render-process-gone: ${JSON.stringify(details)}`);
   });
 
+  // Save position when moved
+  mainWindow.on('moved', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      const [x, y] = mainWindow.getPosition();
+      saveWindowPosition(x, y);
+    }
+  });
+
   // Intercept close event: hide window to tray instead of quitting
   mainWindow.on('close', (event) => {
+    flushWindowPosition();
     if (!isQuitting) {
       event.preventDefault();
       mainWindow?.hide();
@@ -405,6 +477,10 @@ function stopSmoothDragLoop() {
   if (smoothDragTimer) {
     clearInterval(smoothDragTimer);
     smoothDragTimer = null;
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const [x, y] = mainWindow.getPosition();
+    saveWindowPosition(x, y);
   }
 }
 
@@ -821,8 +897,14 @@ app.on('second-instance', (_event, commandLine) => {
   showAndFocusWindow();
 });
 
+app.on('before-quit', () => {
+  isQuitting = true;
+  flushWindowPosition();
+});
+
 app.on('will-quit', () => {
   logDebug(`[APP] app will-quit fired`);
+  flushWindowPosition();
   if (gsmtcBridge) {
     gsmtcBridge.destroy();
     gsmtcBridge = null;

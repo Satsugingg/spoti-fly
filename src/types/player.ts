@@ -23,6 +23,8 @@ export interface SpotiflySettings {
   opacity?: number;
   spotifyClientId?: string;
   startOnBoot?: boolean;
+  windowX?: number;
+  windowY?: number;
 }
 
 export interface SpotifyTokens {
