@@ -455,6 +455,7 @@ let isSnappedBottom = false;
 let bounceImpulseX = 0;
 let bounceImpulseY = 0;
 
+const SNAP_MARGIN = 16;          // Inset padding from screen edge for floating aesthetic
 const SNAP_THRESHOLD = 26;       // Threshold in px to trigger magnetic snap
 const BREAKAWAY_THRESHOLD = 38;  // Distance cursor must move to break magnetic pull
 const BOUNCE_AMOUNT = 7;         // Visual bounce amplitude on edge contact
@@ -478,18 +479,18 @@ function startSmoothDragLoop() {
         const display = screen.getDisplayNearestPoint(cursor);
         const { x: workX, y: workY, width: workW, height: workH } = display.workArea;
         const [winW, winH] = mainWindow.getSize();
-        const minX = workX;
-        const maxX = workX + workW - winW;
-        const minY = workY;
-        const maxY = workY + workH - winH;
+        const minX = workX + SNAP_MARGIN;
+        const maxX = workX + workW - winW - SNAP_MARGIN;
+        const minY = workY + SNAP_MARGIN;
+        const maxY = workY + workH - winH - SNAP_MARGIN;
 
         // --- HORIZONTAL MAGNETIC SNAPPING ---
         if (!isSnappedLeft && !isSnappedRight) {
-          if (rawX >= minX - 15 && rawX <= minX + SNAP_THRESHOLD) {
+          if (rawX >= workX - 20 && rawX <= minX + SNAP_THRESHOLD) {
             isSnappedLeft = true;
             bounceImpulseX = BOUNCE_AMOUNT;
             targetX = minX;
-          } else if (rawX >= maxX - SNAP_THRESHOLD && rawX <= maxX + 15) {
+          } else if (rawX >= maxX - SNAP_THRESHOLD && rawX <= workX + workW - winW + 20) {
             isSnappedRight = true;
             bounceImpulseX = -BOUNCE_AMOUNT;
             targetX = maxX;
@@ -520,11 +521,11 @@ function startSmoothDragLoop() {
 
         // --- VERTICAL MAGNETIC SNAPPING ---
         if (!isSnappedTop && !isSnappedBottom) {
-          if (rawY >= minY - 15 && rawY <= minY + SNAP_THRESHOLD) {
+          if (rawY >= workY - 20 && rawY <= minY + SNAP_THRESHOLD) {
             isSnappedTop = true;
             bounceImpulseY = BOUNCE_AMOUNT;
             targetY = minY;
-          } else if (rawY >= maxY - SNAP_THRESHOLD && rawY <= maxY + 15) {
+          } else if (rawY >= maxY - SNAP_THRESHOLD && rawY <= workY + workH - winH + 20) {
             isSnappedBottom = true;
             bounceImpulseY = -BOUNCE_AMOUNT;
             targetY = maxY;
@@ -660,14 +661,15 @@ function animateToHeight(newHeight: number): Promise<void> {
     try {
       const display = screen.getDisplayMatching(bounds);
       const workArea = display.workArea;
-      const maxBottom = workArea.y + workArea.height;
+      const maxBottom = workArea.y + workArea.height - SNAP_MARGIN;
+      const minTop = workArea.y + SNAP_MARGIN;
 
       if (targetHeight > startH) {
         // Expanding (e.g. Opening lyrics or settings)
         if (startY + targetHeight > maxBottom) {
           // Window would expand off-screen past the bottom / taskbar
           const overflow = (startY + targetHeight) - maxBottom;
-          targetY = Math.max(workArea.y, startY - overflow - 8);
+          targetY = Math.max(minTop, startY - overflow);
           bottomExpansionShiftY = startY - targetY;
         } else {
           bottomExpansionShiftY = 0;
@@ -678,7 +680,7 @@ function animateToHeight(newHeight: number): Promise<void> {
           targetY = Math.min(maxBottom - targetHeight, startY + bottomExpansionShiftY);
           bottomExpansionShiftY = 0;
         } else if (startY + targetHeight > maxBottom) {
-          targetY = Math.max(workArea.y, maxBottom - targetHeight);
+          targetY = Math.max(minTop, maxBottom - targetHeight);
         }
       }
     } catch (e) {
