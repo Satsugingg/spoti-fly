@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Mic2, ChevronUp, Music, Loader2 } from 'lucide-react';
+import { Mic2, ChevronDown, Music, Loader2 } from 'lucide-react';
 import { TrackState } from '../../types/player';
 import { fetchLyrics, LyricsData } from '../services/lyricsService';
 
@@ -87,9 +87,9 @@ export const LyricsDrawer: React.FC<LyricsDrawerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="app-no-drag scrollable-area flex flex-col h-[210px] w-full border-t border-white/10 bg-black/60 backdrop-blur-xl transition-all duration-300 select-none">
+    <div className="app-no-drag scrollable-area flex flex-col flex-1 min-h-0 w-full border-t border-white/10 bg-black/60 backdrop-blur-xl transition-all duration-300 select-none">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/5 bg-white/[0.02]">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/5 bg-white/[0.02] shrink-0">
         <div className="flex items-center gap-1.5">
           <Mic2 size={13} className="text-[#1DB954]" />
           <span className="text-[11px] font-semibold text-white tracking-wide">
@@ -107,7 +107,7 @@ export const LyricsDrawer: React.FC<LyricsDrawerProps> = ({
           title="Collapse Lyrics"
           className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
         >
-          <ChevronUp size={14} />
+          <ChevronDown size={14} />
         </button>
       </div>
 

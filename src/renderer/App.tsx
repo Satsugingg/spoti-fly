@@ -154,20 +154,35 @@ export const App: React.FC = () => {
   const handleToggleLyrics = useCallback(async () => {
     if (isSettingsOpenRef.current) return;
     const nextOpen = !isLyricsOpenRef.current;
-    setIsLyricsOpen(nextOpen);
-    isLyricsOpenRef.current = nextOpen;
 
-    if (window.spotifly) {
-      if (nextOpen) {
+    if (nextOpen) {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+      setIsShrunk(false);
+      setIsLyricsOpen(true);
+      isLyricsOpenRef.current = true;
+
+      if (window.spotifly) {
         await window.spotifly.animateWindowHeight(LYRICS_HEIGHT);
-      } else {
-        const targetH = isHoveredRef.current
-          ? getFullHeight(settingsRef.current.minimalMode)
-          : getShrunkHeight(settingsRef.current.minimalMode);
-        await window.spotifly.animateWindowHeight(targetH);
+      }
+    } else {
+      isLyricsOpenRef.current = false;
+      setIsShrunk(false);
+
+      if (window.spotifly) {
+        const fullH = getFullHeight(settingsRef.current.minimalMode);
+        await window.spotifly.animateWindowHeight(fullH);
+      }
+
+      setIsLyricsOpen(false);
+
+      if (!isHoveredRef.current) {
+        scheduleShrink();
       }
     }
-  }, [getFullHeight, getShrunkHeight]);
+  }, [getFullHeight, scheduleShrink]);
 
   const handleFetchUpNext = useCallback(async () => {
     if (isSpotifyAuth && spotifyApi.isAuthenticated()) {
@@ -283,7 +298,7 @@ export const App: React.FC = () => {
 
   const handleMouseLeave = () => {
     isHoveredRef.current = false;
-    if (!isDraggingRef.current && !isSettingsOpenRef.current) {
+    if (!isDraggingRef.current && !isSettingsOpenRef.current && !isLyricsOpenRef.current) {
       scheduleShrink();
     }
   };
@@ -592,44 +607,52 @@ export const App: React.FC = () => {
         />
 
         {/* Dynamic Card Container: Top Bar, Player Card & Synced Lyrics */}
-        <div className="relative z-10 flex flex-col justify-between h-full w-full">
+        <div className="relative z-10 flex flex-col h-full w-full overflow-hidden">
           {/* Top Bar with Winged Spotifly Branding & Window Actions */}
-          <TopBar
-            isPinned={isPinned}
-            onTogglePin={handleTogglePin}
-            onMinimize={handleMinimize}
-            onClose={handleClose}
-            onOpenSettings={handleOpenSettings}
-            mode={settings.mode}
-            isVisible={!isShrunk}
-            isLyricsOpen={isLyricsOpen}
-            onToggleLyrics={handleToggleLyrics}
-          />
+          <div className="shrink-0 w-full">
+            <TopBar
+              isPinned={isPinned}
+              onTogglePin={handleTogglePin}
+              onMinimize={handleMinimize}
+              onClose={handleClose}
+              onOpenSettings={handleOpenSettings}
+              mode={settings.mode}
+              isVisible={isLyricsOpen || !isShrunk}
+              isLyricsOpen={isLyricsOpen}
+              onToggleLyrics={handleToggleLyrics}
+            />
+          </div>
 
           {/* Main Player Card */}
-          <PlayerCard
-            track={track}
-            isMinimal={Boolean(settings.minimalMode)}
-            isShrunk={isShrunk}
-            onTogglePlay={handleTogglePlay}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-            onSeek={handleSeek}
-            onToggleShuffle={handleToggleShuffle}
-            onToggleRepeat={handleToggleRepeat}
-            showUpNextPreview={settings.showUpNextPreview !== false}
-            onFetchUpNext={handleFetchUpNext}
-            isLyricsOpen={isLyricsOpen}
-            onToggleLyrics={handleToggleLyrics}
-          />
+          <div className="shrink-0 w-full">
+            <PlayerCard
+              track={track}
+              isMinimal={Boolean(settings.minimalMode)}
+              isShrunk={!isLyricsOpen && isShrunk}
+              onTogglePlay={handleTogglePlay}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onSeek={handleSeek}
+              onToggleShuffle={handleToggleShuffle}
+              onToggleRepeat={handleToggleRepeat}
+              showUpNextPreview={settings.showUpNextPreview !== false}
+              onFetchUpNext={handleFetchUpNext}
+              isLyricsOpen={isLyricsOpen}
+              onToggleLyrics={handleToggleLyrics}
+            />
+          </div>
 
           {/* Synced Lyrics Drawer */}
-          <LyricsDrawer
-            isOpen={isLyricsOpen}
-            onClose={handleToggleLyrics}
-            track={track}
-            onSeek={handleSeek}
-          />
+          {isLyricsOpen && (
+            <div className="w-full flex-1 min-h-0 overflow-hidden flex flex-col">
+              <LyricsDrawer
+                isOpen={isLyricsOpen}
+                onClose={handleToggleLyrics}
+                track={track}
+                onSeek={handleSeek}
+              />
+            </div>
+          )}
         </div>
 
         {/* Temporary Sleek Volume HUD */}

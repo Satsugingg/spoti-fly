@@ -74,6 +74,7 @@ let isAlwaysOnTop = true;
 let isQuitting = false;
 let targetHeight = 130;
 let currentHeight = 130;
+let bottomExpansionShiftY = 0;
 let heightAnimTimer: NodeJS.Timeout | null = null;
 let animResolve: (() => void) | null = null;
 
@@ -609,6 +610,16 @@ function stopSmoothDragLoop() {
 
 ipcMain.on('window:start-inertial-drag', (_event, clientX: number, clientY: number) => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (heightAnimTimer) {
+    clearInterval(heightAnimTimer);
+    heightAnimTimer = null;
+  }
+  if (animResolve) {
+    const prev = animResolve;
+    animResolve = null;
+    prev();
+  }
+  bottomExpansionShiftY = 0;
   const [winX, winY] = mainWindow.getPosition();
   currentX = winX;
   currentY = winY;
@@ -638,11 +649,44 @@ function animateToHeight(newHeight: number): Promise<void> {
       return;
     }
 
-    const [w, h] = mainWindow.getSize();
-    currentHeight = h;
+    const bounds = mainWindow.getBounds();
+    const startH = bounds.height;
+    const startY = bounds.y;
+    const winX = bounds.x;
+    const winW = bounds.width;
 
-    if (Math.abs(targetHeight - currentHeight) <= 1) {
-      mainWindow.setSize(w, targetHeight);
+    let targetY = startY;
+
+    try {
+      const display = screen.getDisplayMatching(bounds);
+      const workArea = display.workArea;
+      const maxBottom = workArea.y + workArea.height;
+
+      if (targetHeight > startH) {
+        // Expanding (e.g. Opening lyrics or settings)
+        if (startY + targetHeight > maxBottom) {
+          // Window would expand off-screen past the bottom / taskbar
+          const overflow = (startY + targetHeight) - maxBottom;
+          targetY = Math.max(workArea.y, startY - overflow - 8);
+          bottomExpansionShiftY = startY - targetY;
+        } else {
+          bottomExpansionShiftY = 0;
+        }
+      } else if (targetHeight < startH) {
+        // Collapsing / Shrinking
+        if (bottomExpansionShiftY > 0) {
+          targetY = Math.min(maxBottom - targetHeight, startY + bottomExpansionShiftY);
+          bottomExpansionShiftY = 0;
+        } else if (startY + targetHeight > maxBottom) {
+          targetY = Math.max(workArea.y, maxBottom - targetHeight);
+        }
+      }
+    } catch (e) {
+      logDebug(`[ANIMATE] Display match error: ${e}`);
+    }
+
+    if (Math.abs(targetHeight - startH) <= 1 && Math.abs(targetY - startY) <= 1) {
+      mainWindow.setBounds({ x: winX, y: Math.round(targetY), width: winW, height: targetHeight });
       currentHeight = targetHeight;
       if (heightAnimTimer) {
         clearInterval(heightAnimTimer);
@@ -669,6 +713,9 @@ function animateToHeight(newHeight: number): Promise<void> {
       heightAnimTimer = null;
     }
 
+    let animH = startH;
+    let animY = startY;
+
     heightAnimTimer = setInterval(() => {
       if (!mainWindow || mainWindow.isDestroyed()) {
         if (heightAnimTimer) {
@@ -683,18 +730,42 @@ function animateToHeight(newHeight: number): Promise<void> {
         return;
       }
 
-      const [winW, winH] = mainWindow.getSize();
-      currentHeight = winH;
-      const dh = targetHeight - currentHeight;
+      const dh = targetHeight - animH;
+      const dy = targetY - animY;
 
-      if (Math.abs(dh) > 1) {
-        const step = dh * 0.24;
-        const delta = Math.abs(step) < 1 ? Math.sign(dh) : step;
-        currentHeight += delta;
-        mainWindow.setSize(winW, Math.round(currentHeight));
+      const isDoneH = Math.abs(dh) <= 1;
+      const isDoneY = Math.abs(dy) <= 1;
+
+      if (!isDoneH || !isDoneY) {
+        if (!isDoneH) {
+          const stepH = dh * 0.28;
+          animH += Math.abs(stepH) < 1 ? Math.sign(dh) : stepH;
+        } else {
+          animH = targetHeight;
+        }
+
+        if (!isDoneY) {
+          const stepY = dy * 0.28;
+          animY += Math.abs(stepY) < 1 ? Math.sign(dy) : stepY;
+        } else {
+          animY = targetY;
+        }
+
+        currentHeight = animH;
+        mainWindow.setBounds({
+          x: winX,
+          y: Math.round(animY),
+          width: winW,
+          height: Math.round(animH),
+        });
       } else {
-        mainWindow.setSize(winW, targetHeight);
         currentHeight = targetHeight;
+        mainWindow.setBounds({
+          x: winX,
+          y: Math.round(targetY),
+          width: winW,
+          height: targetHeight,
+        });
         if (heightAnimTimer) {
           clearInterval(heightAnimTimer);
           heightAnimTimer = null;
