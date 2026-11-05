@@ -4,7 +4,7 @@ import { PlayerCard } from './components/PlayerCard';
 import { SettingsModal } from './components/SettingsModal';
 import { LyricsDrawer } from './components/LyricsDrawer';
 import { VolumeHud } from './components/VolumeHud';
-import { TrackState, SpotiflySettings } from '../types/player';
+import { TrackState, SpotiflySettings, DEFAULT_HOTKEYS } from '../types/player';
 import { spotifyApi } from './services/spotifyPkce';
 
 // Default initial loading track (Clean state before media connects)
@@ -59,6 +59,7 @@ export const App: React.FC = () => {
     startOnBoot: true,
     volumeTarget: 'spotify',
     globalHotkeysEnabled: true,
+    hotkeys: { ...DEFAULT_HOTKEYS },
     enableEdgeSnapping: true,
     showUpNextPreview: true,
     showLyrics: false,

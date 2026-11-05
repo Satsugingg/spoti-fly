@@ -4,7 +4,7 @@ import fs from 'fs';
 import http from 'http';
 import { execFile } from 'child_process';
 import { GsmtcBridge } from './gsmtc-bridge';
-import { SpotiflySettings, SpotifyTokens, TrackState } from '../types/player';
+import { SpotiflySettings, SpotifyTokens, TrackState, DEFAULT_HOTKEYS, HotkeyConfig } from '../types/player';
 
 const logFile = path.join(app.getPath('userData'), 'spotifly-debug.log');
 function logDebug(msg: string) {
@@ -89,6 +89,7 @@ const defaultSettings: SpotiflySettings = {
   startOnBoot: true,
   volumeTarget: 'spotify',
   globalHotkeysEnabled: true,
+  hotkeys: { ...DEFAULT_HOTKEYS },
   enableEdgeSnapping: true,
   showUpNextPreview: true,
   showLyrics: false,
@@ -113,7 +114,14 @@ function loadSettings(): SpotiflySettings {
   try {
     if (fs.existsSync(configPath)) {
       const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      return { ...defaultSettings, ...data };
+      return {
+        ...defaultSettings,
+        ...data,
+        hotkeys: {
+          ...defaultSettings.hotkeys,
+          ...(data.hotkeys || {}),
+        },
+      };
     }
   } catch {}
   return defaultSettings;
@@ -122,14 +130,21 @@ function loadSettings(): SpotiflySettings {
 function saveSettings(settings: Partial<SpotiflySettings>) {
   try {
     const current = loadSettings();
-    const updated = { ...current, ...settings };
+    const updated: SpotiflySettings = {
+      ...current,
+      ...settings,
+      hotkeys: settings.hotkeys
+        ? { ...(current.hotkeys || defaultSettings.hotkeys), ...settings.hotkeys }
+        : current.hotkeys,
+    };
+    fs.writeFileSync(configPath, JSON.stringify(updated, null, 2), 'utf8');
+
     if (typeof settings.startOnBoot === 'boolean') {
       applyStartOnBoot(settings.startOnBoot);
     }
-    if (typeof settings.globalHotkeysEnabled === 'boolean') {
+    if (typeof settings.globalHotkeysEnabled === 'boolean' || settings.hotkeys) {
       registerGlobalHotkeys();
     }
-    fs.writeFileSync(configPath, JSON.stringify(updated, null, 2), 'utf8');
   } catch (err) {
     logDebug(`[CONFIG] Failed to save settings: ${err}`);
   }
@@ -1080,9 +1095,17 @@ function registerGlobalHotkeys() {
   const settings = loadSettings();
   if (settings.globalHotkeysEnabled === false) return;
 
-  const hotkeys: { key: string; name: string; action: () => void }[] = [
+  const hotkeysConfig = settings.hotkeys || {};
+  const playPauseKey = hotkeysConfig.playPause !== undefined ? hotkeysConfig.playPause : DEFAULT_HOTKEYS.playPause;
+  const nextTrackKey = hotkeysConfig.nextTrack !== undefined ? hotkeysConfig.nextTrack : DEFAULT_HOTKEYS.nextTrack;
+  const prevTrackKey = hotkeysConfig.prevTrack !== undefined ? hotkeysConfig.prevTrack : DEFAULT_HOTKEYS.prevTrack;
+  const volumeUpKey = hotkeysConfig.volumeUp !== undefined ? hotkeysConfig.volumeUp : DEFAULT_HOTKEYS.volumeUp;
+  const volumeDownKey = hotkeysConfig.volumeDown !== undefined ? hotkeysConfig.volumeDown : DEFAULT_HOTKEYS.volumeDown;
+  const toggleWindowKey = hotkeysConfig.toggleWindow !== undefined ? hotkeysConfig.toggleWindow : DEFAULT_HOTKEYS.toggleWindow;
+
+  const hotkeys: { key?: string; name: string; action: () => void }[] = [
     {
-      key: 'CommandOrControl+Alt+Space',
+      key: playPauseKey,
       name: 'Play/Pause',
       action: () => {
         logDebug('[HOTKEY] Play/Pause triggered');
@@ -1091,7 +1114,7 @@ function registerGlobalHotkeys() {
       },
     },
     {
-      key: 'CommandOrControl+Alt+Right',
+      key: nextTrackKey,
       name: 'Next Track',
       action: () => {
         logDebug('[HOTKEY] Next track triggered');
@@ -1100,7 +1123,7 @@ function registerGlobalHotkeys() {
       },
     },
     {
-      key: 'CommandOrControl+Alt+Left',
+      key: prevTrackKey,
       name: 'Previous Track',
       action: () => {
         logDebug('[HOTKEY] Prev track triggered');
@@ -1109,7 +1132,7 @@ function registerGlobalHotkeys() {
       },
     },
     {
-      key: 'CommandOrControl+Alt+Up',
+      key: volumeUpKey,
       name: 'Volume Up',
       action: () => {
         logDebug('[HOTKEY] Volume Up triggered');
@@ -1124,7 +1147,7 @@ function registerGlobalHotkeys() {
       },
     },
     {
-      key: 'CommandOrControl+Alt+Down',
+      key: volumeDownKey,
       name: 'Volume Down',
       action: () => {
         logDebug('[HOTKEY] Volume Down triggered');
@@ -1139,7 +1162,7 @@ function registerGlobalHotkeys() {
       },
     },
     {
-      key: 'CommandOrControl+Alt+H',
+      key: toggleWindowKey,
       name: 'Toggle Visibility',
       action: () => {
         logDebug('[HOTKEY] Toggle visibility triggered');
@@ -1157,6 +1180,7 @@ function registerGlobalHotkeys() {
   ];
 
   for (const h of hotkeys) {
+    if (!h.key || h.key.trim() === '') continue;
     try {
       const ok = globalShortcut.register(h.key, h.action);
       if (!ok) {

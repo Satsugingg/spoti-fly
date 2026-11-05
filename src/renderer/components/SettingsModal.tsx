@@ -9,9 +9,77 @@ import {
   Keyboard,
   Magnet,
   SkipForward,
+  RotateCcw,
 } from 'lucide-react';
-import { SpotiflySettings } from '../../types/player';
+import { SpotiflySettings, DEFAULT_HOTKEYS, HotkeyConfig } from '../../types/player';
 import logoUrl from '../assets/logo.png';
+
+interface HotkeyActionItem {
+  id: keyof HotkeyConfig;
+  label: string;
+}
+
+const HOTKEY_ACTIONS: HotkeyActionItem[] = [
+  { id: 'playPause', label: 'Play / Pause' },
+  { id: 'nextTrack', label: 'Next Track' },
+  { id: 'prevTrack', label: 'Previous Track' },
+  { id: 'volumeUp', label: 'Volume Up (+5%)' },
+  { id: 'volumeDown', label: 'Volume Down (-5%)' },
+  { id: 'toggleWindow', label: 'Show / Hide Window' },
+];
+
+function formatShortcutDisplay(accelerator?: string): string {
+  if (!accelerator || !accelerator.trim()) return 'None (Unassigned)';
+  return accelerator
+    .replace(/CommandOrControl|CmdOrCtrl/gi, 'Ctrl')
+    .replace(/Super|Meta/gi, 'Win')
+    .replace(/ArrowUp/gi, '↑')
+    .replace(/ArrowDown/gi, '↓')
+    .replace(/ArrowLeft/gi, '←')
+    .replace(/ArrowRight/gi, '→')
+    .replace(/Return/gi, 'Enter')
+    .split('+')
+    .join(' + ');
+}
+
+function getAcceleratorFromEvent(e: KeyboardEvent): { accelerator?: string; error?: string } {
+  const isCtrl = e.ctrlKey;
+  const isAlt = e.altKey;
+  const isShift = e.shiftKey;
+  const isMeta = e.metaKey;
+
+  // Modifiers alone
+  if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+    return {};
+  }
+
+  let key = e.key;
+
+  if (key === ' ') key = 'Space';
+  else if (key === 'ArrowUp') key = 'Up';
+  else if (key === 'ArrowDown') key = 'Down';
+  else if (key === 'ArrowLeft') key = 'Left';
+  else if (key === 'ArrowRight') key = 'Right';
+  else if (key === 'Enter') key = 'Return';
+  else if (/^[a-z]$/i.test(key)) key = key.toUpperCase();
+  else if (/^F\d{1,2}$/i.test(key)) key = key.toUpperCase();
+
+  const isFunctionKey = /^F\d{1,2}$/i.test(key);
+  const isMediaKey = /^Media/i.test(key);
+
+  if (!isCtrl && !isAlt && !isShift && !isMeta && !isFunctionKey && !isMediaKey) {
+    return { error: 'Include Ctrl, Alt, or Shift' };
+  }
+
+  const parts: string[] = [];
+  if (isCtrl) parts.push('CommandOrControl');
+  if (isAlt) parts.push('Alt');
+  if (isShift) parts.push('Shift');
+  if (isMeta) parts.push('Super');
+  parts.push(key);
+
+  return { accelerator: parts.join('+') };
+}
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -29,12 +97,67 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateSettings,
 }) => {
   const [hasShortcut, setHasShortcut] = useState(false);
+  const [recordingAction, setRecordingAction] = useState<keyof HotkeyConfig | null>(null);
+  const [recordingStatus, setRecordingStatus] = useState<string | null>(null);
 
   const isStartOnBoot = settings.startOnBoot !== false;
   const isGlobalHotkeys = settings.globalHotkeysEnabled !== false;
   const isEdgeSnapping = settings.enableEdgeSnapping !== false;
   const isUpNextPreview = settings.showUpNextPreview !== false;
   const volumeTarget = settings.volumeTarget || 'spotify';
+
+  useEffect(() => {
+    if (!recordingAction) {
+      setRecordingStatus(null);
+      return;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (e.key === 'Escape') {
+        setRecordingAction(null);
+        setRecordingStatus(null);
+        return;
+      }
+
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        const currentHotkeys = { ...DEFAULT_HOTKEYS, ...(settings.hotkeys || {}) };
+        const updated = { ...currentHotkeys, [recordingAction]: '' };
+        onUpdateSettings({ hotkeys: updated });
+        setRecordingAction(null);
+        setRecordingStatus(null);
+        return;
+      }
+
+      const { accelerator, error } = getAcceleratorFromEvent(e);
+      if (error) {
+        setRecordingStatus(error);
+        return;
+      }
+
+      if (accelerator !== undefined) {
+        const currentHotkeys = { ...DEFAULT_HOTKEYS, ...(settings.hotkeys || {}) };
+        const updated = { ...currentHotkeys, [recordingAction]: accelerator };
+        onUpdateSettings({ hotkeys: updated });
+        setRecordingAction(null);
+        setRecordingStatus(null);
+      } else {
+        const mods: string[] = [];
+        if (e.ctrlKey) mods.push('Ctrl');
+        if (e.altKey) mods.push('Alt');
+        if (e.shiftKey) mods.push('Shift');
+        if (e.metaKey) mods.push('Win');
+        setRecordingStatus(mods.length > 0 ? `${mods.join(' + ')} + ...` : null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [recordingAction, settings.hotkeys, onUpdateSettings]);
 
   useEffect(() => {
     if (isOpen && window.spotifly) {
@@ -101,7 +224,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Settings List */}
-        <div className="space-y-2 mt-2.5 max-h-[350px] overflow-y-auto pr-0.5 scrollbar-none">
+        <div className="scrollable-area space-y-2 mt-2.5 max-h-[350px] overflow-y-auto pr-0.5 scrollbar-none">
           {/* Scroll Wheel Volume Target */}
           <div className="p-2.5 rounded-xl bg-zinc-800/50 border border-white/5">
             <div className="flex items-center gap-1.5 mb-1.5">
@@ -177,23 +300,108 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </button>
 
-            {/* Hotkeys Summary List */}
+            {/* Hotkeys Customization Table */}
             {isGlobalHotkeys && (
-              <div className="mt-2 pt-2 border-t border-white/5 space-y-1">
-                {[
-                  { keys: 'Ctrl+Alt+Space', action: 'Play / Pause' },
-                  { keys: 'Ctrl+Alt+→', action: 'Next Track' },
-                  { keys: 'Ctrl+Alt+←', action: 'Previous Track' },
-                  { keys: 'Ctrl+Alt+↑ / ↓', action: 'Volume ±5%' },
-                  { keys: 'Ctrl+Alt+H', action: 'Show / Hide Spoti-Fly' },
-                ].map((hk) => (
-                  <div key={hk.keys} className="flex items-center justify-between text-[10px]">
-                    <span className="text-zinc-400">{hk.action}</span>
-                    <kbd className="px-1.5 py-0.5 bg-black/40 rounded border border-white/10 font-mono text-[9px] text-zinc-300">
-                      {hk.keys}
-                    </kbd>
+              <div className="mt-2.5 pt-2.5 border-t border-white/10 space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] text-zinc-400 font-medium px-0.5 mb-1">
+                  <span>Action</span>
+                  <span>Shortcut</span>
+                </div>
+
+                {HOTKEY_ACTIONS.map(({ id, label }) => {
+                  const currentHotkeys = { ...DEFAULT_HOTKEYS, ...(settings.hotkeys || {}) };
+                  const currentVal = currentHotkeys[id];
+                  const isRecording = recordingAction === id;
+                  const isDefault = currentVal === DEFAULT_HOTKEYS[id];
+
+                  return (
+                    <div
+                      key={id}
+                      className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-black/30 border border-white/5 hover:border-white/10 transition-colors"
+                    >
+                      <span className="text-[11px] text-zinc-300 font-medium leading-tight">
+                        {label}
+                      </span>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isRecording) {
+                              setRecordingAction(null);
+                              setRecordingStatus(null);
+                            } else {
+                              setRecordingAction(id);
+                              setRecordingStatus(null);
+                            }
+                          }}
+                          className={`px-2 py-0.5 rounded text-[10px] font-mono transition-all border ${
+                            isRecording
+                              ? 'bg-[#1DB954]/20 border-[#1DB954] text-[#1DB954] animate-pulse ring-1 ring-[#1DB954]/50'
+                              : currentVal
+                              ? 'bg-zinc-800/80 hover:bg-zinc-700/80 border-white/10 text-white hover:border-white/20'
+                              : 'bg-zinc-900 border-dashed border-zinc-700 text-zinc-500 hover:text-zinc-300'
+                          }`}
+                        >
+                          {isRecording ? (
+                            recordingStatus || 'Press keys...'
+                          ) : currentVal ? (
+                            formatShortcutDisplay(currentVal)
+                          ) : (
+                            'Click to record'
+                          )}
+                        </button>
+
+                        {/* Reset individual button if modified */}
+                        {!isDefault && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = {
+                                ...currentHotkeys,
+                                [id]: DEFAULT_HOTKEYS[id],
+                              };
+                              onUpdateSettings({ hotkeys: updated });
+                            }}
+                            title="Reset to default"
+                            className="p-1 rounded text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
+                          >
+                            <RotateCcw size={11} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Recording helper prompt when active */}
+                {recordingAction && (
+                  <div className="p-1.5 rounded-md bg-[#1DB954]/10 border border-[#1DB954]/30 text-[10px] text-zinc-300 flex items-center justify-between">
+                    <span>
+                      Press shortcut, <kbd className="px-1 py-0.2 bg-black/40 rounded text-[9px] text-[#1DB954]">Backspace</kbd> to clear, or <kbd className="px-1 py-0.2 bg-black/40 rounded text-[9px] text-zinc-400">Esc</kbd>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setRecordingAction(null)}
+                      className="text-zinc-400 hover:text-white text-[9px] underline ml-1"
+                    >
+                      Cancel
+                    </button>
                   </div>
-                ))}
+                )}
+
+                {/* Reset all shortcuts */}
+                <div className="flex items-center justify-between pt-1 text-[10px] text-zinc-400">
+                  <span className="text-[9px] text-zinc-500">Requires Ctrl, Alt, or Shift</span>
+                  <button
+                    type="button"
+                    onClick={() => onUpdateSettings({ hotkeys: { ...DEFAULT_HOTKEYS } })}
+                    className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-[#1DB954] transition-colors"
+                  >
+                    <RotateCcw size={10} />
+                    <span>Reset All Shortcuts</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>

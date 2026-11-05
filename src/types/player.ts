@@ -15,6 +15,24 @@ export interface TrackState {
 
 export type PlaybackCommand = 'play' | 'pause' | 'toggle' | 'next' | 'prev' | 'seek';
 
+export interface HotkeyConfig {
+  playPause?: string;
+  nextTrack?: string;
+  prevTrack?: string;
+  volumeUp?: string;
+  volumeDown?: string;
+  toggleWindow?: string;
+}
+
+export const DEFAULT_HOTKEYS: Required<HotkeyConfig> = {
+  playPause: 'CommandOrControl+Alt+Space',
+  nextTrack: 'CommandOrControl+Alt+Right',
+  prevTrack: 'CommandOrControl+Alt+Left',
+  volumeUp: 'CommandOrControl+Alt+Up',
+  volumeDown: 'CommandOrControl+Alt+Down',
+  toggleWindow: 'CommandOrControl+Alt+H',
+};
+
 export interface SpotiflySettings {
   mode: 'gsmtc' | 'spotify' | 'demo';
   alwaysOnTop: boolean;
@@ -27,6 +45,7 @@ export interface SpotiflySettings {
   windowY?: number;
   volumeTarget?: 'spotify' | 'system';
   globalHotkeysEnabled?: boolean;
+  hotkeys?: HotkeyConfig;
   enableEdgeSnapping?: boolean;
   showUpNextPreview?: boolean;
   showLyrics?: boolean;
