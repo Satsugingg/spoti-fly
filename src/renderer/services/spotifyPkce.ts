@@ -189,6 +189,48 @@ export class SpotifyApiClient {
     );
     return res.ok;
   }
+
+  public async setVolume(volumePercent: number): Promise<boolean> {
+    const token = await this.getValidAccessToken();
+    if (!token) return false;
+    const clamped = Math.max(0, Math.min(100, Math.round(volumePercent)));
+    try {
+      const res = await fetch(
+        `https://api.spotify.com/v1/me/player/volume?volume_percent=${clamped}`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  public async fetchQueueNext(): Promise<{ title: string; artist: string; artworkUrl: string | null } | null> {
+    const token = await this.getValidAccessToken();
+    if (!token) return null;
+    try {
+      const res = await fetch('https://api.spotify.com/v1/me/player/queue', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.queue && data.queue.length > 0) {
+          const item = data.queue[0];
+          const artworkUrl = item.album?.images?.[0]?.url || null;
+          const artist = item.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist';
+          return {
+            title: item.name || 'Unknown Track',
+            artist,
+            artworkUrl,
+          };
+        }
+      }
+    } catch {}
+    return null;
+  }
 }
 
 export const spotifyApi = new SpotifyApiClient();

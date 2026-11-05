@@ -7,10 +7,18 @@ import {
   Shuffle,
   Repeat,
   Repeat1,
+  Mic2,
+  Music2,
 } from 'lucide-react';
 import { MarqueeText } from './MarqueeText';
 import { TrackState } from '../../types/player';
 import logoUrl from '../assets/logo.png';
+
+interface UpNextData {
+  title: string;
+  artist: string;
+  artworkUrl?: string | null;
+}
 
 interface PlayerCardProps {
   track: TrackState;
@@ -22,6 +30,10 @@ interface PlayerCardProps {
   onSeek: (seconds: number) => void;
   onToggleShuffle?: () => void;
   onToggleRepeat?: () => void;
+  showUpNextPreview?: boolean;
+  onFetchUpNext?: () => Promise<UpNextData | null>;
+  isLyricsOpen?: boolean;
+  onToggleLyrics?: () => void;
 }
 
 function formatTime(totalSeconds: number): string {
@@ -41,12 +53,38 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   onSeek,
   onToggleShuffle,
   onToggleRepeat,
+  showUpNextPreview = true,
+  onFetchUpNext,
+  isLyricsOpen = false,
+  onToggleLyrics,
 }) => {
   // Local smooth playback progress extrapolation
   const [localPos, setLocalPos] = useState(track.position);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubPos, setScrubPos] = useState(0);
+  const [isNextHovered, setIsNextHovered] = useState(false);
+  const [upNextTrack, setUpNextTrack] = useState<UpNextData | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const lastFetchedQueueRef = useRef<number>(0);
+
+  const handleNextMouseEnter = async () => {
+    setIsNextHovered(true);
+    if (!showUpNextPreview || !onFetchUpNext) return;
+
+    // Cache queue for 12 seconds so hover doesn't repeatedly hammer the API
+    const now = Date.now();
+    if (now - lastFetchedQueueRef.current > 12000 || !upNextTrack) {
+      lastFetchedQueueRef.current = now;
+      const data = await onFetchUpNext();
+      if (data) {
+        setUpNextTrack(data);
+      }
+    }
+  };
+
+  const handleNextMouseLeave = () => {
+    setIsNextHovered(false);
+  };
 
   useEffect(() => {
     setLocalPos(track.position);
@@ -273,14 +311,60 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               )}
             </button>
 
-            {/* Skip Next */}
-            <button
-              onClick={onNext}
-              title="Next Track"
-              className="p-1 text-white hover:text-zinc-200 hover:scale-110 active:scale-90 transition-transform"
+            {/* Skip Next with Up Next Hover Tooltip */}
+            <div
+              className="relative"
+              onMouseEnter={handleNextMouseEnter}
+              onMouseLeave={handleNextMouseLeave}
             >
-              <SkipForward size={17} className="fill-white stroke-none" />
-            </button>
+              <button
+                onClick={onNext}
+                title="Next Track"
+                className="p-1 text-white hover:text-zinc-200 hover:scale-110 active:scale-90 transition-transform"
+              >
+                <SkipForward size={17} className="fill-white stroke-none" />
+              </button>
+
+              {/* Up Next Hover Floating Preview */}
+              {showUpNextPreview && isNextHovered && (
+                <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-44 rounded-xl bg-zinc-950/95 border border-white/20 p-2 shadow-2xl backdrop-blur-2xl transition-all duration-200 animate-in fade-in zoom-in-95">
+                  <div className="flex items-center gap-1 mb-1">
+                    <span className="text-[9px] font-bold text-[#1DB954] uppercase tracking-wider">
+                      Up Next
+                    </span>
+                  </div>
+                  {upNextTrack ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-md overflow-hidden bg-zinc-800 shrink-0 border border-white/10 flex items-center justify-center">
+                        {upNextTrack.artworkUrl ? (
+                          <img
+                            src={upNextTrack.artworkUrl}
+                            alt="Next Cover"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Music2 size={13} className="text-zinc-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-[11px] font-semibold text-white truncate leading-tight">
+                          {upNextTrack.title}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 truncate leading-tight">
+                          {upNextTrack.artist}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-zinc-400 text-left leading-tight">
+                      Next in Spotify queue
+                    </p>
+                  )}
+                  {/* Tooltip Arrow */}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-zinc-950" />
+                </div>
+              )}
+            </div>
 
             {/* Repeat */}
             <button
@@ -298,6 +382,21 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                 <Repeat size={13} className="stroke-[2.2]" />
               )}
             </button>
+
+            {/* Synced Lyrics Toggle Button in Controls */}
+            {onToggleLyrics && (
+              <button
+                onClick={onToggleLyrics}
+                title={isLyricsOpen ? 'Hide Synced Lyrics' : 'Show Synced Lyrics'}
+                className={`p-1 transition-all ${
+                  isLyricsOpen
+                    ? 'text-[#1DB954] hover:text-[#1ed760] scale-110 drop-shadow-[0_0_6px_rgba(29,185,84,0.6)]'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Mic2 size={13} className="stroke-[2.2]" />
+              </button>
+            )}
           </div>
         </div>
       </div>

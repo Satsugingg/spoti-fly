@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/Download-Spoti--Fly_Setup.exe-1DB954?style=for-the-badge&logo=windows&logoColor=white" alt="Download Spoti-Fly for Windows" />
   </a>
   <a href="https://github.com/Satsugingg/spoti-fly/releases">
-    <img src="https://img.shields.io/github/v/release/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Release" alt="Release v1.1.7" />
+    <img src="https://img.shields.io/github/v/release/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Release" alt="Release v1.2.0" />
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows_10_%26_11-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Platform: Windows 10 & 11" />
   <img src="https://img.shields.io/badge/Spotify-Vanilla_%7C_Store_%7C_Web-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Spotify: Vanilla | Store | Web" />
@@ -44,7 +44,16 @@ Spoti-Fly works straight out of the box with **any** Spotify setup — zero conf
 ## ✨ Features
 
 * 🪟 **Always-on-Top:** Stays visible over full-screen apps, games, IDEs, and browser windows.
-* 🧲 **Fluid Drag Physics:** Exponential lerp motion with zero rubber-banding or stutter.
+* 🧲 **Magnetic Screen Edge Snapping with Physics:** Tactile magnetic snap when dragging near monitor edges with a satisfying subtle bounce into the bezel and weighted breakaway resistance when pulling away.
+* 🔊 **Scroll Wheel Volume Control & HUD:** Scroll mouse wheel anywhere over the mini-player to adjust volume. Selectable in Settings between Spotify Application volume or Windows Master volume with a sleek temporary HUD overlay.
+* ⌨️ **System-Wide Global Hotkeys:** Control your music anywhere while gaming or working:
+  * `Ctrl + Alt + Space` — Play / Pause
+  * `Ctrl + Alt + →` — Next Track
+  * `Ctrl + Alt + ←` — Previous Track
+  * `Ctrl + Alt + ↑ / ↓` — Volume Up / Down (5%)
+  * `Ctrl + Alt + H` — Show / Hide Spoti-Fly
+* ⏭️ **"Up Next" Hover Preview:** Hovering over the next track button reveals an instant floating card with upcoming song title, artist, and cover art.
+* 🎤 **Synced Lyrics Dropdown:** Expandable karaoke-style synchronized lyrics powered by LRCLIB with real-time auto-scroll and click-to-seek playback.
 * 🎵 **Native Windows GSMTC Sync:** Strictly targets Spotify with zero interference from YouTube or browser audio.
 * 🎨 **Dual Display Modes:**
   * **Standard Mode (130px):** Full album art, marquee title, artist, live glowing scrub bar, and controls.
@@ -80,7 +89,7 @@ npm run dev
 npm run package
 ```
 
-The compiled installer will be generated in `release/Spoti-Fly Setup 1.1.7.exe`.
+The compiled installer will be generated in `release/Spoti-Fly Setup 1.2.0.exe`.
 
 ---
 

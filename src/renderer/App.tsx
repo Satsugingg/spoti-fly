@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TopBar } from './components/TopBar';
 import { PlayerCard } from './components/PlayerCard';
 import { SettingsModal } from './components/SettingsModal';
+import { LyricsDrawer } from './components/LyricsDrawer';
+import { VolumeHud } from './components/VolumeHud';
 import { TrackState, SpotiflySettings } from '../types/player';
 import { spotifyApi } from './services/spotifyPkce';
 
@@ -21,24 +23,45 @@ const INITIAL_LOADING_TRACK: TrackState = {
   timestamp: Date.now(),
 };
 
-const SETTINGS_HEIGHT = 440;
+const SETTINGS_HEIGHT = 490;
+const LYRICS_HEIGHT = 340;
 
 export const App: React.FC = () => {
   const [isPinned, setIsPinned] = useState(false);
   const [isShrunk, setIsShrunk] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSettingsClosing, setIsSettingsClosing] = useState(false);
+  const [isLyricsOpen, setIsLyricsOpen] = useState(false);
+  const [volumeHud, setVolumeHud] = useState<{
+    visible: boolean;
+    percent: number;
+    target: 'spotify' | 'system';
+  }>({
+    visible: false,
+    percent: 100,
+    target: 'spotify',
+  });
+
   const isHoveredRef = useRef(false);
   const isDraggingRef = useRef(false);
   const isSettingsOpenRef = useRef(false);
   const isSettingsClosingRef = useRef(false);
+  const isLyricsOpenRef = useRef(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const volumeHudTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSpotifyVolRef = useRef<number>(100);
+
   const [settings, setSettings] = useState<SpotiflySettings>({
     mode: 'gsmtc',
     alwaysOnTop: true,
     showMarquee: true,
     minimalMode: false,
     startOnBoot: true,
+    volumeTarget: 'spotify',
+    globalHotkeysEnabled: true,
+    enableEdgeSnapping: true,
+    showUpNextPreview: true,
+    showLyrics: false,
   });
 
   const [track, setTrack] = useState<TrackState>(INITIAL_LOADING_TRACK);
@@ -65,7 +88,7 @@ export const App: React.FC = () => {
       idleTimerRef.current = null;
     }
     setIsShrunk(false);
-    if (!isSettingsOpenRef.current && window.spotifly) {
+    if (!isSettingsOpenRef.current && !isLyricsOpenRef.current && window.spotifly) {
       window.spotifly.animateWindowHeight(getFullHeight());
     }
   }, [getFullHeight]);
@@ -75,7 +98,12 @@ export const App: React.FC = () => {
       clearTimeout(idleTimerRef.current);
     }
     idleTimerRef.current = setTimeout(() => {
-      if (!isHoveredRef.current && !isSettingsOpenRef.current && !isDraggingRef.current) {
+      if (
+        !isHoveredRef.current &&
+        !isSettingsOpenRef.current &&
+        !isDraggingRef.current &&
+        !isLyricsOpenRef.current
+      ) {
         setIsShrunk(true);
         if (window.spotifly) {
           window.spotifly.animateWindowHeight(getShrunkHeight());
@@ -83,6 +111,74 @@ export const App: React.FC = () => {
       }
     }, 2000);
   }, [getShrunkHeight]);
+
+  const showVolumeHud = useCallback((percent: number, target: 'spotify' | 'system') => {
+    if (volumeHudTimerRef.current) {
+      clearTimeout(volumeHudTimerRef.current);
+    }
+    setVolumeHud({ visible: true, percent, target });
+    volumeHudTimerRef.current = setTimeout(() => {
+      setVolumeHud((prev) => (prev ? { ...prev, visible: false } : prev));
+    }, 1400);
+  }, []);
+
+  const triggerVolumeChange = useCallback(
+    (delta: number) => {
+      const currentTarget = settingsRef.current.volumeTarget || 'spotify';
+      if (currentTarget === 'spotify' && isSpotifyAuth && spotifyApi.isAuthenticated()) {
+        const nextVol = Math.max(0, Math.min(100, lastSpotifyVolRef.current + delta));
+        lastSpotifyVolRef.current = nextVol;
+        spotifyApi.setVolume(nextVol);
+        showVolumeHud(nextVol, 'spotify');
+        return;
+      }
+
+      if (window.spotifly?.adjustVolume) {
+        window.spotifly.adjustVolume(delta, currentTarget).then((newVol) => {
+          showVolumeHud(newVol, currentTarget);
+        });
+      }
+    },
+    [isSpotifyAuth, showVolumeHud]
+  );
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('.scrollable-area') || isSettingsOpenRef.current) return;
+
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 5 : -5;
+    triggerVolumeChange(delta);
+  };
+
+  const handleToggleLyrics = useCallback(async () => {
+    if (isSettingsOpenRef.current) return;
+    const nextOpen = !isLyricsOpenRef.current;
+    setIsLyricsOpen(nextOpen);
+    isLyricsOpenRef.current = nextOpen;
+
+    if (window.spotifly) {
+      if (nextOpen) {
+        await window.spotifly.animateWindowHeight(LYRICS_HEIGHT);
+      } else {
+        const targetH = isHoveredRef.current
+          ? getFullHeight(settingsRef.current.minimalMode)
+          : getShrunkHeight(settingsRef.current.minimalMode);
+        await window.spotifly.animateWindowHeight(targetH);
+      }
+    }
+  }, [getFullHeight, getShrunkHeight]);
+
+  const handleFetchUpNext = useCallback(async () => {
+    if (isSpotifyAuth && spotifyApi.isAuthenticated()) {
+      const queue = await spotifyApi.fetchQueueNext();
+      if (queue) return queue;
+    }
+    if (window.spotifly?.getQueueNext) {
+      return await window.spotifly.getQueueNext();
+    }
+    return null;
+  }, [isSpotifyAuth]);
 
   // Initial 2s idle shrink timer on launch
   useEffect(() => {
@@ -293,7 +389,9 @@ export const App: React.FC = () => {
     setIsSettingsClosing(true);
     isSettingsClosingRef.current = true;
 
-    const targetH = isHoveredRef.current
+    const targetH = isLyricsOpenRef.current
+      ? LYRICS_HEIGHT
+      : isHoveredRef.current
       ? getFullHeight(settingsRef.current.minimalMode)
       : getShrunkHeight(settingsRef.current.minimalMode);
 
@@ -306,7 +404,7 @@ export const App: React.FC = () => {
     isSettingsClosingRef.current = false;
     isSettingsOpenRef.current = false;
 
-    if (!isHoveredRef.current) {
+    if (!isHoveredRef.current && !isLyricsOpenRef.current) {
       setIsShrunk(true);
     } else {
       setIsShrunk(false);
@@ -322,13 +420,41 @@ export const App: React.FC = () => {
     if (window.spotifly) {
       window.spotifly.saveSettings(newSettings);
     }
-    if (!isSettingsOpenRef.current && typeof newSettings.minimalMode === 'boolean') {
+    if (!isSettingsOpenRef.current && !isLyricsOpenRef.current && typeof newSettings.minimalMode === 'boolean') {
       const h = isHoveredRef.current
         ? getFullHeight(newSettings.minimalMode)
         : getShrunkHeight(newSettings.minimalMode);
       window.spotifly?.animateWindowHeight(h);
     }
   };
+
+  // Listen to Global Hotkeys and Volume events from Electron
+  useEffect(() => {
+    if (!window.spotifly) return;
+
+    const unsubVol = window.spotifly.onVolumeChanged?.((data) => {
+      showVolumeHud(data.percent, data.target);
+    });
+
+    const unsubHotkey = window.spotifly.onHotkeyTrigger?.((action) => {
+      if (action === 'playpause') {
+        handleTogglePlay();
+      } else if (action === 'next') {
+        handleNext();
+      } else if (action === 'prev') {
+        handlePrevious();
+      } else if (action === 'volume_up') {
+        triggerVolumeChange(5);
+      } else if (action === 'volume_down') {
+        triggerVolumeChange(-5);
+      }
+    });
+
+    return () => {
+      unsubVol?.();
+      unsubHotkey?.();
+    };
+  }, [handleTogglePlay, handleNext, handlePrevious, showVolumeHud, triggerVolumeChange]);
 
   // Spotify PKCE Connect
   const handleConnectSpotify = async (clientId: string) => {
@@ -438,6 +564,7 @@ export const App: React.FC = () => {
         onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onWheel={handleWheel}
         style={{
           opacity: isSettingsOpen && !isSettingsClosing
             ? 1
@@ -464,7 +591,7 @@ export const App: React.FC = () => {
           }`}
         />
 
-        {/* Dynamic Card Container: Top Bar & Player Card */}
+        {/* Dynamic Card Container: Top Bar, Player Card & Synced Lyrics */}
         <div className="relative z-10 flex flex-col justify-between h-full w-full">
           {/* Top Bar with Winged Spotifly Branding & Window Actions */}
           <TopBar
@@ -475,6 +602,8 @@ export const App: React.FC = () => {
             onOpenSettings={handleOpenSettings}
             mode={settings.mode}
             isVisible={!isShrunk}
+            isLyricsOpen={isLyricsOpen}
+            onToggleLyrics={handleToggleLyrics}
           />
 
           {/* Main Player Card */}
@@ -488,8 +617,27 @@ export const App: React.FC = () => {
             onSeek={handleSeek}
             onToggleShuffle={handleToggleShuffle}
             onToggleRepeat={handleToggleRepeat}
+            showUpNextPreview={settings.showUpNextPreview !== false}
+            onFetchUpNext={handleFetchUpNext}
+            isLyricsOpen={isLyricsOpen}
+            onToggleLyrics={handleToggleLyrics}
+          />
+
+          {/* Synced Lyrics Drawer */}
+          <LyricsDrawer
+            isOpen={isLyricsOpen}
+            onClose={handleToggleLyrics}
+            track={track}
+            onSeek={handleSeek}
           />
         </div>
+
+        {/* Temporary Sleek Volume HUD */}
+        <VolumeHud
+          visible={volumeHud.visible}
+          percent={volumeHud.percent}
+          target={volumeHud.target}
+        />
 
         {/* Settings Modal */}
         <SettingsModal

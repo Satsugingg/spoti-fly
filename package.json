@@ -1,13 +1,13 @@
 {
   "name": "spoti-fly",
-  "version": "1.1.7",
+  "version": "1.2.0",
   "description": "Always-on-Top Spotify Mini-Player for Windows",
   "main": "dist/main/main.js",
   "author": "satsugingg",
   "license": "MIT",
   "scripts": {
     "clean": "node -e \"const fs = require('fs'); fs.rmSync('dist', { recursive: true, force: true });\"",
-    "copy:daemon": "node -e \"const fs = require('fs'); fs.mkdirSync('dist/main', { recursive: true }); fs.copyFileSync('src/main/gsmtc-daemon.ps1', 'dist/main/gsmtc-daemon.ps1'); if (fs.existsSync('src/main/gsmtc-cmd.ps1')) fs.copyFileSync('src/main/gsmtc-cmd.ps1', 'dist/main/gsmtc-cmd.ps1'); if (fs.existsSync('src/main/media_keys.exe')) fs.copyFileSync('src/main/media_keys.exe', 'dist/main/media_keys.exe'); if (fs.existsSync('public/logo.png')) fs.copyFileSync('public/logo.png', 'dist/main/logo.png');\"",
+    "copy:daemon": "node -e \"const fs = require('fs'); const { execSync } = require('child_process'); fs.mkdirSync('dist/main', { recursive: true }); fs.copyFileSync('src/main/gsmtc-daemon.ps1', 'dist/main/gsmtc-daemon.ps1'); if (fs.existsSync('src/main/gsmtc-cmd.ps1')) fs.copyFileSync('src/main/gsmtc-cmd.ps1', 'dist/main/gsmtc-cmd.ps1'); if (fs.existsSync('src/main/media_keys.exe')) fs.copyFileSync('src/main/media_keys.exe', 'dist/main/media_keys.exe'); if (fs.existsSync('src/main/spotifly_vol.cs')) { execSync('C:\\\\Windows\\\\Microsoft.NET\\\\Framework64\\\\v4.0.30319\\\\csc.exe /nologo /optimize+ /out:dist\\\\main\\\\spotifly_vol.exe src\\\\main\\\\spotifly_vol.cs'); } if (fs.existsSync('public/logo.png')) fs.copyFileSync('public/logo.png', 'dist/main/logo.png');\"",
     "build:electron": "tsc -p tsconfig.electron.json && npm run copy:daemon",
     "build:renderer": "vite build",
     "build": "npm run clean && npm run build:electron && npm run build:renderer",
@@ -31,7 +31,8 @@
     "asarUnpack": [
       "dist/main/gsmtc-daemon.ps1",
       "dist/main/gsmtc-cmd.ps1",
-      "dist/main/media_keys.exe"
+      "dist/main/media_keys.exe",
+      "dist/main/spotifly_vol.exe"
     ],
     "protocols": [
       {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pin, X, Settings2, Minus } from 'lucide-react';
+import { Pin, X, Settings2, Minus, Mic2 } from 'lucide-react';
 import logoUrl from '../assets/logo.png';
 
 interface TopBarProps {
@@ -10,6 +10,8 @@ interface TopBarProps {
   onOpenSettings: () => void;
   mode: 'gsmtc' | 'spotify' | 'demo';
   isVisible?: boolean;
+  isLyricsOpen?: boolean;
+  onToggleLyrics?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -20,6 +22,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenSettings,
   mode,
   isVisible = true,
+  isLyricsOpen = false,
+  onToggleLyrics,
 }) => {
   return (
     <header
@@ -43,6 +47,21 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Right: Window Controls */}
       <div className="app-no-drag flex items-center gap-1">
+        {/* Synced Lyrics Toggle Button */}
+        {onToggleLyrics && (
+          <button
+            onClick={onToggleLyrics}
+            title={isLyricsOpen ? 'Hide Synced Lyrics' : 'Show Synced Lyrics'}
+            className={`p-1 rounded-md transition-all duration-200 ${
+              isLyricsOpen
+                ? 'text-[#1DB954] bg-[#1DB954]/20 hover:bg-[#1DB954]/30 ring-1 ring-[#1DB954]/40'
+                : 'text-zinc-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Mic2 size={13} className="stroke-[2.2]" />
+          </button>
+        )}
+
         {/* Pin Window Down Button (Locks position & always-on-top) */}
         <button
           onClick={onTogglePin}

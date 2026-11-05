@@ -35,6 +35,31 @@ const spotiflyAPI: SpotiflyAPI = {
     };
   },
 
+  onVolumeChanged: (callback: (data: { percent: number; target: 'spotify' | 'system' }) => void) => {
+    const handler = (_event: any, data: { percent: number; target: 'spotify' | 'system' }) => callback(data);
+    ipcRenderer.on('volume:changed', handler);
+    return () => {
+      ipcRenderer.removeListener('volume:changed', handler);
+    };
+  },
+
+  onHotkeyTrigger: (callback: (action: string) => void) => {
+    const handler = (_event: any, action: string) => callback(action);
+    ipcRenderer.on('hotkey:trigger', handler);
+    return () => {
+      ipcRenderer.removeListener('hotkey:trigger', handler);
+    };
+  },
+
+  adjustVolume: (deltaPercent: number, target: 'spotify' | 'system' = 'spotify') =>
+    ipcRenderer.invoke('volume:adjust', deltaPercent, target),
+  getVolume: (target: 'spotify' | 'system' = 'spotify') =>
+    ipcRenderer.invoke('volume:get', target),
+  setVolume: (percent: number, target: 'spotify' | 'system' = 'spotify') =>
+    ipcRenderer.invoke('volume:set', percent, target),
+
+  getQueueNext: () => ipcRenderer.invoke('spotify:get-queue-next'),
+
   startSpotifyAuth: (clientId: string) => ipcRenderer.invoke('spotify:start-auth', clientId),
   getSpotifyTokens: () => ipcRenderer.invoke('spotify:get-tokens'),
   saveSpotifyTokens: (tokens: SpotifyTokens) => ipcRenderer.invoke('spotify:save-tokens', tokens),

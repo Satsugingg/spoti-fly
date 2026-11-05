@@ -25,6 +25,11 @@ export interface SpotiflySettings {
   startOnBoot?: boolean;
   windowX?: number;
   windowY?: number;
+  volumeTarget?: 'spotify' | 'system';
+  globalHotkeysEnabled?: boolean;
+  enableEdgeSnapping?: boolean;
+  showUpNextPreview?: boolean;
+  showLyrics?: boolean;
 }
 
 export interface SpotifyTokens {
@@ -56,6 +61,16 @@ export interface SpotiflyAPI {
   // Event listener
   onMediaUpdate: (callback: (track: TrackState) => void) => () => void;
   onAlwaysOnTopChange: (callback: (isPinned: boolean) => void) => () => void;
+  onVolumeChanged?: (callback: (data: { percent: number; target: 'spotify' | 'system' }) => void) => () => void;
+  onHotkeyTrigger?: (callback: (action: string) => void) => () => void;
+
+  // Volume & Audio controls
+  adjustVolume: (deltaPercent: number, target?: 'spotify' | 'system') => Promise<number>;
+  getVolume: (target?: 'spotify' | 'system') => Promise<number>;
+  setVolume: (percent: number, target?: 'spotify' | 'system') => Promise<number>;
+
+  // Queue
+  getQueueNext?: () => Promise<{ title: string; artist: string; artworkUrl?: string | null } | null>;
 
   // Spotify Auth (PKCE)
   startSpotifyAuth: (clientId: string) => Promise<{ code: string; redirectUri: string; verifier: string } | { error: string }>;

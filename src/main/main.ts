@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell, screen, globalShortcut } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import http from 'http';
+import { execFile } from 'child_process';
 import { GsmtcBridge } from './gsmtc-bridge';
 import { SpotiflySettings, SpotifyTokens, TrackState } from '../types/player';
 
@@ -85,6 +86,11 @@ const defaultSettings: SpotiflySettings = {
   minimalMode: false,
   opacity: 100,
   startOnBoot: true,
+  volumeTarget: 'spotify',
+  globalHotkeysEnabled: true,
+  enableEdgeSnapping: true,
+  showUpNextPreview: true,
+  showLyrics: false,
 };
 
 function applyStartOnBoot(enabled: boolean) {
@@ -118,6 +124,9 @@ function saveSettings(settings: Partial<SpotiflySettings>) {
     const updated = { ...current, ...settings };
     if (typeof settings.startOnBoot === 'boolean') {
       applyStartOnBoot(settings.startOnBoot);
+    }
+    if (typeof settings.globalHotkeysEnabled === 'boolean') {
+      registerGlobalHotkeys();
     }
     fs.writeFileSync(configPath, JSON.stringify(updated, null, 2), 'utf8');
   } catch (err) {
@@ -426,7 +435,7 @@ function showAndFocusWindow() {
 }
 
 // IPC Handlers
-// Smooth Weighted Drag Engine (Monotonic Lerp - ZERO bounce, pure fluid motion)
+// Physics-Based Smooth Drag Engine with Magnetic Screen Edge Snapping & Tactile Breakaway Weight
 let isSmoothDragging = false;
 let smoothDragTimer: NodeJS.Timeout | null = null;
 let currentX = 0;
@@ -436,9 +445,19 @@ let targetY = 0;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 
-// LERP_FACTOR: 0.32 provides a responsive, buttery-smooth follow with weighted dampening
-// Strictly monotonic: mathematically impossible to bounce, rubber-band, or overshoot!
-const LERP_FACTOR = 0.32;
+// Magnetic snapping physics state
+let isSnappedLeft = false;
+let isSnappedRight = false;
+let isSnappedTop = false;
+let isSnappedBottom = false;
+
+let bounceImpulseX = 0;
+let bounceImpulseY = 0;
+
+const SNAP_THRESHOLD = 26;       // Threshold in px to trigger magnetic snap
+const BREAKAWAY_THRESHOLD = 38;  // Distance cursor must move to break magnetic pull
+const BOUNCE_AMOUNT = 7;         // Visual bounce amplitude on edge contact
+const LERP_FACTOR = 0.32;        // Fluid dampening factor
 
 function startSmoothDragLoop() {
   if (smoothDragTimer) return;
@@ -450,23 +469,121 @@ function startSmoothDragLoop() {
 
     if (isSmoothDragging) {
       const cursor = screen.getCursorScreenPoint();
-      targetX = cursor.x - dragOffsetX;
-      targetY = cursor.y - dragOffsetY;
+      const rawX = cursor.x - dragOffsetX;
+      const rawY = cursor.y - dragOffsetY;
+
+      const currentSettings = loadSettings();
+      if (currentSettings.enableEdgeSnapping !== false) {
+        const display = screen.getDisplayNearestPoint(cursor);
+        const { x: workX, y: workY, width: workW, height: workH } = display.workArea;
+        const [winW, winH] = mainWindow.getSize();
+        const minX = workX;
+        const maxX = workX + workW - winW;
+        const minY = workY;
+        const maxY = workY + workH - winH;
+
+        // --- HORIZONTAL MAGNETIC SNAPPING ---
+        if (!isSnappedLeft && !isSnappedRight) {
+          if (rawX >= minX - 15 && rawX <= minX + SNAP_THRESHOLD) {
+            isSnappedLeft = true;
+            bounceImpulseX = BOUNCE_AMOUNT;
+            targetX = minX;
+          } else if (rawX >= maxX - SNAP_THRESHOLD && rawX <= maxX + 15) {
+            isSnappedRight = true;
+            bounceImpulseX = -BOUNCE_AMOUNT;
+            targetX = maxX;
+          } else {
+            targetX = rawX;
+          }
+        } else if (isSnappedLeft) {
+          const pullDelta = rawX - minX;
+          if (pullDelta < 0) {
+            targetX = minX;
+          } else if (pullDelta < BREAKAWAY_THRESHOLD) {
+            targetX = minX + pullDelta * 0.12;
+          } else {
+            isSnappedLeft = false;
+            targetX = rawX;
+          }
+        } else if (isSnappedRight) {
+          const pullDelta = maxX - rawX;
+          if (pullDelta < 0) {
+            targetX = maxX;
+          } else if (pullDelta < BREAKAWAY_THRESHOLD) {
+            targetX = maxX - pullDelta * 0.12;
+          } else {
+            isSnappedRight = false;
+            targetX = rawX;
+          }
+        }
+
+        // --- VERTICAL MAGNETIC SNAPPING ---
+        if (!isSnappedTop && !isSnappedBottom) {
+          if (rawY >= minY - 15 && rawY <= minY + SNAP_THRESHOLD) {
+            isSnappedTop = true;
+            bounceImpulseY = BOUNCE_AMOUNT;
+            targetY = minY;
+          } else if (rawY >= maxY - SNAP_THRESHOLD && rawY <= maxY + 15) {
+            isSnappedBottom = true;
+            bounceImpulseY = -BOUNCE_AMOUNT;
+            targetY = maxY;
+          } else {
+            targetY = rawY;
+          }
+        } else if (isSnappedTop) {
+          const pullDelta = rawY - minY;
+          if (pullDelta < 0) {
+            targetY = minY;
+          } else if (pullDelta < BREAKAWAY_THRESHOLD) {
+            targetY = minY + pullDelta * 0.12;
+          } else {
+            isSnappedTop = false;
+            targetY = rawY;
+          }
+        } else if (isSnappedBottom) {
+          const pullDelta = maxY - rawY;
+          if (pullDelta < 0) {
+            targetY = maxY;
+          } else if (pullDelta < BREAKAWAY_THRESHOLD) {
+            targetY = maxY - pullDelta * 0.12;
+          } else {
+            isSnappedBottom = false;
+            targetY = rawY;
+          }
+        }
+      } else {
+        targetX = rawX;
+        targetY = rawY;
+      }
     }
 
-    const dx = targetX - currentX;
-    const dy = targetY - currentY;
+    // Spring bounce dampening
+    if (Math.abs(bounceImpulseX) > 0.15) {
+      bounceImpulseX *= 0.72;
+    } else {
+      bounceImpulseX = 0;
+    }
+    if (Math.abs(bounceImpulseY) > 0.15) {
+      bounceImpulseY *= 0.72;
+    } else {
+      bounceImpulseY = 0;
+    }
 
-    // Smoothly close the distance without ever overshooting
+    const renderTargetX = targetX + bounceImpulseX;
+    const renderTargetY = targetY + bounceImpulseY;
+
+    const dx = renderTargetX - currentX;
+    const dy = renderTargetY - currentY;
+
     if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
       currentX += dx * LERP_FACTOR;
       currentY += dy * LERP_FACTOR;
       mainWindow.setPosition(Math.round(currentX), Math.round(currentY));
     } else {
-      currentX = targetX;
-      currentY = targetY;
+      currentX = renderTargetX;
+      currentY = renderTargetY;
       mainWindow.setPosition(Math.round(currentX), Math.round(currentY));
-      if (!isSmoothDragging) {
+      if (!isSmoothDragging && bounceImpulseX === 0 && bounceImpulseY === 0) {
         stopSmoothDragLoop();
       }
     }
@@ -474,6 +591,12 @@ function startSmoothDragLoop() {
 }
 
 function stopSmoothDragLoop() {
+  isSnappedLeft = false;
+  isSnappedRight = false;
+  isSnappedTop = false;
+  isSnappedBottom = false;
+  bounceImpulseX = 0;
+  bounceImpulseY = 0;
   if (smoothDragTimer) {
     clearInterval(smoothDragTimer);
     smoothDragTimer = null;
@@ -840,6 +963,217 @@ ipcMain.handle('app:set-start-on-boot', (_event, enabled: boolean) => {
   return enabled;
 });
 
+// Volume & Audio Tool Integration (Native Windows Master & App Volume via spotifly_vol.exe)
+function getVolToolPath(): string {
+  const p1 = path.resolve(__dirname, 'spotifly_vol.exe');
+  const unpacked = p1.replace('app.asar', 'app.asar.unpacked');
+  if (fs.existsSync(unpacked)) return unpacked;
+  if (fs.existsSync(p1)) return p1;
+  const p2 = path.resolve(process.cwd(), 'dist/main/spotifly_vol.exe');
+  if (fs.existsSync(p2)) return p2;
+  const p3 = path.resolve(process.cwd(), 'src/main/spotifly_vol.exe');
+  if (fs.existsSync(p3)) return p3;
+  return p1;
+}
+
+let cachedMasterVolume = 100;
+
+function execVolTool(cmd: string, val?: number | string): Promise<number> {
+  return new Promise((resolve) => {
+    const exePath = getVolToolPath();
+    if (!fs.existsSync(exePath)) {
+      resolve(cachedMasterVolume);
+      return;
+    }
+    const args = [cmd];
+    if (val !== undefined) args.push(String(val));
+    execFile(exePath, args, { windowsHide: true }, (err, stdout) => {
+      if (!err && stdout) {
+        const parsed = parseInt(stdout.trim(), 10);
+        if (!isNaN(parsed)) {
+          cachedMasterVolume = parsed;
+          resolve(parsed);
+          return;
+        }
+      }
+      resolve(cachedMasterVolume);
+    });
+  });
+}
+
+// Global Hotkeys Engine
+function registerGlobalHotkeys() {
+  unregisterGlobalHotkeys();
+  const settings = loadSettings();
+  if (settings.globalHotkeysEnabled === false) return;
+
+  const hotkeys: { key: string; name: string; action: () => void }[] = [
+    {
+      key: 'CommandOrControl+Alt+Space',
+      name: 'Play/Pause',
+      action: () => {
+        logDebug('[HOTKEY] Play/Pause triggered');
+        if (gsmtcBridge) gsmtcBridge.sendCommand('toggle');
+        mainWindow?.webContents.send('hotkey:trigger', 'playpause');
+      },
+    },
+    {
+      key: 'CommandOrControl+Alt+Right',
+      name: 'Next Track',
+      action: () => {
+        logDebug('[HOTKEY] Next track triggered');
+        if (gsmtcBridge) gsmtcBridge.sendCommand('next');
+        mainWindow?.webContents.send('hotkey:trigger', 'next');
+      },
+    },
+    {
+      key: 'CommandOrControl+Alt+Left',
+      name: 'Previous Track',
+      action: () => {
+        logDebug('[HOTKEY] Prev track triggered');
+        if (gsmtcBridge) gsmtcBridge.sendCommand('prev');
+        mainWindow?.webContents.send('hotkey:trigger', 'prev');
+      },
+    },
+    {
+      key: 'CommandOrControl+Alt+Up',
+      name: 'Volume Up',
+      action: () => {
+        logDebug('[HOTKEY] Volume Up triggered');
+        const s = loadSettings();
+        if (s.volumeTarget === 'system') {
+          execVolTool('change-master', 5).then((vol) => {
+            mainWindow?.webContents.send('volume:changed', { percent: vol, target: 'system' });
+          });
+        } else {
+          mainWindow?.webContents.send('hotkey:trigger', 'volume_up');
+        }
+      },
+    },
+    {
+      key: 'CommandOrControl+Alt+Down',
+      name: 'Volume Down',
+      action: () => {
+        logDebug('[HOTKEY] Volume Down triggered');
+        const s = loadSettings();
+        if (s.volumeTarget === 'system') {
+          execVolTool('change-master', -5).then((vol) => {
+            mainWindow?.webContents.send('volume:changed', { percent: vol, target: 'system' });
+          });
+        } else {
+          mainWindow?.webContents.send('hotkey:trigger', 'volume_down');
+        }
+      },
+    },
+    {
+      key: 'CommandOrControl+Alt+H',
+      name: 'Toggle Visibility',
+      action: () => {
+        logDebug('[HOTKEY] Toggle visibility triggered');
+        if (!mainWindow || mainWindow.isDestroyed()) {
+          createWindow();
+          return;
+        }
+        if (mainWindow.isVisible()) {
+          mainWindow.hide();
+        } else {
+          showAndFocusWindow();
+        }
+      },
+    },
+  ];
+
+  for (const h of hotkeys) {
+    try {
+      const ok = globalShortcut.register(h.key, h.action);
+      if (!ok) {
+        logDebug(`[HOTKEY] Failed to register: ${h.key} (${h.name})`);
+      } else {
+        logDebug(`[HOTKEY] Registered successfully: ${h.key} (${h.name})`);
+      }
+    } catch (err: any) {
+      logDebug(`[HOTKEY] Registration error for ${h.key}: ${err?.message}`);
+    }
+  }
+}
+
+function unregisterGlobalHotkeys() {
+  try {
+    globalShortcut.unregisterAll();
+    logDebug('[HOTKEY] Unregistered all global shortcuts');
+  } catch {}
+}
+
+ipcMain.handle('volume:adjust', async (_event, deltaPercent: number, target: 'spotify' | 'system' = 'spotify') => {
+  if (target === 'system') {
+    const newVol = await execVolTool('change-master', deltaPercent);
+    mainWindow?.webContents.send('volume:changed', { percent: newVol, target: 'system' });
+    return newVol;
+  }
+  const newVol = await execVolTool('change-master', deltaPercent);
+  mainWindow?.webContents.send('volume:changed', { percent: newVol, target: 'spotify' });
+  return newVol;
+});
+
+ipcMain.handle('volume:get', async (_event, _target: 'spotify' | 'system' = 'spotify') => {
+  const vol = await execVolTool('get-master');
+  return vol;
+});
+
+ipcMain.handle('volume:set', async (_event, percent: number, target: 'spotify' | 'system' = 'spotify') => {
+  const vol = await execVolTool('set-master', percent);
+  mainWindow?.webContents.send('volume:changed', { percent: vol, target });
+  return vol;
+});
+
+ipcMain.handle('spotify:get-queue-next', async () => {
+  const tokens = loadTokens();
+  if (!tokens || !tokens.accessToken) return null;
+  try {
+    const https = require('https');
+    return new Promise((resolve) => {
+      const req = https.get(
+        'https://api.spotify.com/v1/me/player/queue',
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.accessToken}`,
+          },
+        },
+        (res: any) => {
+          let data = '';
+          res.on('data', (chunk: any) => (data += chunk));
+          res.on('end', () => {
+            if (res.statusCode === 200) {
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.queue && parsed.queue.length > 0) {
+                  const first = parsed.queue[0];
+                  const artworkUrl = first.album?.images?.[0]?.url || null;
+                  const artist = first.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist';
+                  resolve({
+                    title: first.name || 'Unknown Track',
+                    artist,
+                    artworkUrl,
+                  });
+                  return;
+                }
+              } catch {}
+            }
+            resolve(null);
+          });
+        }
+      );
+      req.on('error', () => resolve(null));
+      req.setTimeout(2500, () => {
+        req.destroy();
+        resolve(null);
+      });
+    });
+  } catch {
+    return null;
+  }
+});
+
 function startLocalHttpBridge() {
   const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -883,6 +1217,7 @@ function startLocalHttpBridge() {
 app.whenReady().then(() => {
   logDebug(`[APP] app.whenReady fired`);
   createWindow();
+  registerGlobalHotkeys();
   startLocalHttpBridge();
 
   app.on('activate', () => {
@@ -905,6 +1240,7 @@ app.on('before-quit', () => {
 app.on('will-quit', () => {
   logDebug(`[APP] app will-quit fired`);
   flushWindowPosition();
+  unregisterGlobalHotkeys();
   if (gsmtcBridge) {
     gsmtcBridge.destroy();
     gsmtcBridge = null;
