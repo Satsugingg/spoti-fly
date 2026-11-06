@@ -272,7 +272,7 @@ function createWindow() {
   const settings = loadSettings();
   isAlwaysOnTop = true; // Always default to true so it stays visible on top of Spotify
   const appIcon = createAppIcon();
-  const initialHeight = settings.minimalMode ? 72 : 130;
+  const initialHeight = settings.minimalMode ? 72 : 142;
   targetHeight = initialHeight;
   currentHeight = initialHeight;
 

@@ -73,7 +73,7 @@ export const App: React.FC = () => {
   const settingsRef = useRef(settings);
 
   const getFullHeight = useCallback(
-    (minimal: boolean = Boolean(settingsRef.current.minimalMode)) => (minimal ? 72 : 130),
+    (minimal: boolean = Boolean(settingsRef.current.minimalMode)) => (minimal ? 72 : 142),
     []
   );
 

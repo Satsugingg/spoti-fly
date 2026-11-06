@@ -71,21 +71,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   const [localPos, setLocalPos] = useState(track.position);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubPos, setScrubPos] = useState(0);
-  const [isNextHovered, setIsNextHovered] = useState(false);
   const [upNextTrack, setUpNextTrack] = useState<UpNextData | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const lastFetchedQueueRef = useRef<number>(0);
-  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    lastFetchedQueueRef.current = 0;
-    setUpNextTrack(null);
-  }, [track.title]);
 
   const fetchQueueData = async () => {
     if (!showUpNextPreview || !onFetchUpNext) return;
     const now = Date.now();
-    if (now - lastFetchedQueueRef.current > 6000 || !upNextTrack) {
+    if (now - lastFetchedQueueRef.current > 4000 || !upNextTrack) {
       lastFetchedQueueRef.current = now;
       const data = await onFetchUpNext();
       if (data) {
@@ -94,36 +87,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     }
   };
 
-  const handleNextMouseEnter = () => {
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-    setIsNextHovered(true);
+  useEffect(() => {
+    lastFetchedQueueRef.current = 0;
     fetchQueueData();
-  };
-
-  const handleNextMouseLeave = () => {
-    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    hoverTimerRef.current = setTimeout(() => {
-      setIsNextHovered(false);
-    }, 350);
-  };
-
-  const handlePreviewMouseEnter = () => {
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-    setIsNextHovered(true);
-  };
-
-  const handlePreviewMouseLeave = () => {
-    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    hoverTimerRef.current = setTimeout(() => {
-      setIsNextHovered(false);
-    }, 300);
-  };
+  }, [track.title, isSpotifyAuth]);
 
   useEffect(() => {
     setLocalPos(track.position);
@@ -253,105 +220,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         isShrunk ? 'pt-1 pb-2 justify-between' : 'pt-0.5 pb-2 justify-between'
       }`}
     >
-      {/* Up Next In-Card Overlay Preview (100% inside window, zero clipping, smooth hover) */}
-      {showUpNextPreview && isNextHovered && (
-        <div
-          onMouseEnter={handlePreviewMouseEnter}
-          onMouseLeave={handlePreviewMouseLeave}
-          className="absolute inset-x-2 top-0 bottom-[33px] z-50 rounded-xl bg-zinc-950/95 border border-[#1DB954]/30 p-2 shadow-2xl backdrop-blur-2xl flex items-center gap-2.5 transition-all duration-200 pointer-events-auto"
-        >
-          {/* Left: Artwork / Icon */}
-          <div className="w-11 h-11 rounded-lg overflow-hidden bg-zinc-900 border border-white/10 shrink-0 flex items-center justify-center shadow">
-            {upNextTrack?.artworkUrl ? (
-              <img
-                src={upNextTrack.artworkUrl}
-                alt="Next Track Cover"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center">
-                <Music2 size={18} className="text-[#1DB954]" />
-              </div>
-            )}
-          </div>
-
-          {/* Middle: Track info / Queue prompt */}
-          <div className="flex-1 min-w-0 flex flex-col justify-center">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1DB954]/20 text-[#1DB954] text-[8.5px] font-bold uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#1DB954] animate-pulse" />
-                Up Next
-              </span>
-              {isSpotifyAuth ? (
-                <span className="text-[8.5px] font-mono text-zinc-400">Spotify Queue</span>
-              ) : (
-                <span className="text-[8.5px] font-mono text-zinc-500">Queue Sync</span>
-              )}
-            </div>
-
-            {upNextTrack ? (
-              <div className="min-w-0">
-                <p className="text-[12px] font-bold text-white truncate leading-tight">
-                  {upNextTrack.title}
-                </p>
-                <p className="text-[10px] text-zinc-400 truncate leading-tight mt-0.5">
-                  {upNextTrack.artist}
-                </p>
-              </div>
-            ) : isSpotifyAuth ? (
-              <p className="text-[10.5px] text-zinc-400 leading-tight">
-                Fetching upcoming queue...
-              </p>
-            ) : hasSpotifyClientId ? (
-              <div className="flex items-center justify-between gap-1.5">
-                <span className="text-[9.5px] text-zinc-300 truncate">
-                  Connect Spotify to preview queue
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onConnectSpotify?.();
-                  }}
-                  className="px-2 py-0.5 rounded bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold text-[9.5px] shrink-0 shadow flex items-center gap-1 transition-colors"
-                >
-                  <Radio size={10} /> Connect 1-Click
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between gap-1.5">
-                <span className="text-[9.5px] text-zinc-300 truncate">
-                  Setup Client ID to sync queue
-                </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenSettings?.();
-                  }}
-                  className="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-[9.5px] shrink-0 shadow flex items-center gap-1 transition-colors border border-white/10"
-                >
-                  Setup in Settings ⚙
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Right: Quick dismiss button */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsNextHovered(false);
-            }}
-            className="p-1 text-zinc-500 hover:text-white rounded transition-colors self-start -mr-0.5"
-            title="Close Preview"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
       {/* Middle Row: Album Artwork + Track Info & Controls */}
       <div className="flex items-center gap-3 mt-0.5">
         {/* Left: Album Artwork */}
@@ -449,12 +317,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               )}
             </button>
 
-            {/* Skip Next with Up Next Hover trigger */}
+            {/* Skip Next */}
             <button
               onClick={onNext}
-              onMouseEnter={handleNextMouseEnter}
-              onMouseLeave={handleNextMouseLeave}
-              title="Next Track (Hover for Up Next preview)"
+              title="Next Track"
               className="p-1 text-white hover:text-zinc-200 hover:scale-110 active:scale-90 transition-transform"
             >
               <SkipForward size={17} className="fill-white stroke-none" />
@@ -542,6 +408,58 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             />
           </div>
         </div>
+
+        {/* Up Next Inline Row (very small cover + title) below playback bar */}
+        {showUpNextPreview && (
+          <div
+            className={`flex items-center gap-1.5 px-0.5 transition-all duration-300 ease-out select-none ${
+              isShrunk
+                ? 'max-h-0 opacity-0 overflow-hidden mt-0'
+                : 'max-h-5 opacity-100 mt-1.5'
+            }`}
+          >
+            {/* Very small picture of song cover (14x14px rounded-sm) */}
+            <div className="w-3.5 h-3.5 rounded-sm overflow-hidden bg-zinc-800 border border-white/10 shrink-0 flex items-center justify-center shadow-sm">
+              {upNextTrack?.artworkUrl ? (
+                <img
+                  src={upNextTrack.artworkUrl}
+                  alt="Next Track Cover"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Music2 size={8} className="text-[#1DB954]" />
+              )}
+            </div>
+
+            {/* Song Title & Artist */}
+            <div className="flex-1 min-w-0 flex items-center gap-1 text-[9px] leading-tight">
+              <span className="text-[#1DB954] font-bold text-[8px] uppercase tracking-wider shrink-0">
+                Next:
+              </span>
+              {upNextTrack ? (
+                <span className="text-zinc-300 truncate">
+                  <span className="font-semibold text-white">{upNextTrack.title}</span>
+                  <span className="text-zinc-400"> • {upNextTrack.artist}</span>
+                </span>
+              ) : isSpotifyAuth ? (
+                <span className="text-zinc-500 italic truncate text-[8.5px]">
+                  Loading queue...
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenSettings?.();
+                  }}
+                  className="text-zinc-400 hover:text-[#1DB954] transition-colors truncate text-[8.5px] underline decoration-zinc-600 cursor-pointer"
+                >
+                  Sync queue in settings ↗
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
