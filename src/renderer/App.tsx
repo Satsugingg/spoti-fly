@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TopBar } from './components/TopBar';
 import { PlayerCard } from './components/PlayerCard';
-import { CompactBar } from './components/CompactBar';
 import { SettingsModal, DEFAULT_HOTKEYS } from './components/SettingsModal';
 import { LyricsDrawer } from './components/LyricsDrawer';
 import { VolumeHud } from './components/VolumeHud';
@@ -58,7 +57,7 @@ export const App: React.FC = () => {
     alwaysOnTop: true,
     showMarquee: true,
     minimalMode: false,
-    compactMode: false,
+    playerScale: 100,
     startOnBoot: true,
     startMinimized: false,
     volumeTarget: 'spotify',
@@ -75,20 +74,12 @@ export const App: React.FC = () => {
   const settingsRef = useRef(settings);
 
   const getFullHeight = useCallback(
-    (settingsState: SpotiflySettings = settingsRef.current) => {
-      if (settingsState.compactMode) return 48;
-      if (settingsState.minimalMode) return 72;
-      return 142;
-    },
+    (minimal: boolean = Boolean(settingsRef.current.minimalMode)) => (minimal ? 72 : 142),
     []
   );
 
   const getShrunkHeight = useCallback(
-    (settingsState: SpotiflySettings = settingsRef.current) => {
-      if (settingsState.compactMode) return 48;
-      if (settingsState.minimalMode) return 48;
-      return 86;
-    },
+    (minimal: boolean = Boolean(settingsRef.current.minimalMode)) => (minimal ? 48 : 86),
     []
   );
 
@@ -186,7 +177,7 @@ export const App: React.FC = () => {
       setIsShrunk(false);
 
       if (window.spotifly) {
-        const fullH = getFullHeight(settingsRef.current);
+        const fullH = getFullHeight(settingsRef.current.minimalMode);
         await window.spotifly.animateWindowHeight(fullH);
       }
 
@@ -415,8 +406,8 @@ export const App: React.FC = () => {
     const targetH = isLyricsOpenRef.current
       ? LYRICS_HEIGHT
       : isHoveredRef.current
-      ? getFullHeight(settingsRef.current)
-      : getShrunkHeight(settingsRef.current);
+      ? getFullHeight(settingsRef.current.minimalMode)
+      : getShrunkHeight(settingsRef.current.minimalMode);
 
     if (window.spotifly) {
       await window.spotifly.animateWindowHeight(targetH);
@@ -443,17 +434,20 @@ export const App: React.FC = () => {
     if (window.spotifly) {
       window.spotifly.saveSettings(newSettings);
     }
+    if (typeof newSettings.playerScale === 'number' && window.spotifly?.setPlayerScale) {
+      window.spotifly.setPlayerScale(newSettings.playerScale);
+    }
     if (newSettings.showKaraokeButton === false && isLyricsOpenRef.current) {
       handleToggleLyrics();
     }
     if (
       !isSettingsOpenRef.current &&
       !isLyricsOpenRef.current &&
-      (typeof newSettings.minimalMode === 'boolean' || typeof newSettings.compactMode === 'boolean')
+      typeof newSettings.minimalMode === 'boolean'
     ) {
       const h = isHoveredRef.current
-        ? getFullHeight(updated)
-        : getShrunkHeight(updated);
+        ? getFullHeight(newSettings.minimalMode)
+        : getShrunkHeight(newSettings.minimalMode);
       window.spotifly?.animateWindowHeight(h);
     }
   };
@@ -627,74 +621,58 @@ export const App: React.FC = () => {
           }`}
         />
 
-        {/* Dynamic Card Container: Compact Bar OR (Top Bar + Player Card + Synced Lyrics) */}
-        {settings.compactMode && !isLyricsOpen ? (
-          <div className="relative z-10 flex flex-col h-full w-full overflow-hidden justify-center">
-            <CompactBar
+        {/* Dynamic Card Container: Top Bar, Player Card & Synced Lyrics */}
+        <div className="relative z-10 flex flex-col h-full w-full overflow-hidden">
+          {/* Top Bar with Winged Spotifly Branding & Window Actions */}
+          <div className="shrink-0 w-full">
+            <TopBar
+              isPinned={isPinned}
+              onTogglePin={handleTogglePin}
+              onMinimize={handleMinimize}
+              onClose={handleClose}
+              onOpenSettings={handleOpenSettings}
+              mode={settings.mode}
+              isVisible={isLyricsOpen || !isShrunk}
+              isLyricsOpen={isLyricsOpen}
+              onToggleLyrics={settings.showKaraokeButton !== false ? handleToggleLyrics : undefined}
+            />
+          </div>
+
+          {/* Main Player Card */}
+          <div className="shrink-0 w-full">
+            <PlayerCard
               track={track}
+              isMinimal={Boolean(settings.minimalMode)}
+              isShrunk={!isLyricsOpen && isShrunk}
               onTogglePlay={handleTogglePlay}
               onNext={handleNext}
               onPrevious={handlePrevious}
-              onTogglePin={handleTogglePin}
-              isPinned={isPinned}
+              onSeek={handleSeek}
+              onToggleShuffle={handleToggleShuffle}
+              onToggleRepeat={handleToggleRepeat}
+              showUpNextPreview={Boolean(settings.showUpNextPreview)}
+              onFetchUpNext={handleFetchUpNext}
+              isLyricsOpen={isLyricsOpen}
+              onToggleLyrics={settings.showKaraokeButton !== false ? handleToggleLyrics : undefined}
+              isSpotifyAuth={isSpotifyAuth}
+              hasSpotifyClientId={Boolean(settings.spotifyClientId)}
+              onConnectSpotify={() => handleConnectSpotify()}
               onOpenSettings={handleOpenSettings}
-              onToggleZip={() => handleUpdateSettings({ compactMode: false })}
             />
           </div>
-        ) : (
-          <div className="relative z-10 flex flex-col h-full w-full overflow-hidden">
-            {/* Top Bar with Winged Spotifly Branding & Window Actions */}
-            <div className="shrink-0 w-full">
-              <TopBar
-                isPinned={isPinned}
-                onTogglePin={handleTogglePin}
-                onMinimize={handleMinimize}
-                onClose={handleClose}
-                onOpenSettings={handleOpenSettings}
-                mode={settings.mode}
-                isVisible={isLyricsOpen || !isShrunk}
-                isLyricsOpen={isLyricsOpen}
-                onToggleLyrics={settings.showKaraokeButton !== false ? handleToggleLyrics : undefined}
-                onToggleZip={() => handleUpdateSettings({ compactMode: true })}
-              />
-            </div>
 
-            {/* Main Player Card */}
-            <div className="shrink-0 w-full">
-              <PlayerCard
+          {/* Synced Lyrics Drawer */}
+          {isLyricsOpen && (
+            <div className="w-full flex-1 min-h-0 overflow-hidden flex flex-col">
+              <LyricsDrawer
+                isOpen={isLyricsOpen}
+                onClose={handleToggleLyrics}
                 track={track}
-                isMinimal={Boolean(settings.minimalMode)}
-                isShrunk={!isLyricsOpen && isShrunk}
-                onTogglePlay={handleTogglePlay}
-                onNext={handleNext}
-                onPrevious={handlePrevious}
                 onSeek={handleSeek}
-                onToggleShuffle={handleToggleShuffle}
-                onToggleRepeat={handleToggleRepeat}
-                showUpNextPreview={Boolean(settings.showUpNextPreview)}
-                onFetchUpNext={handleFetchUpNext}
-                isLyricsOpen={isLyricsOpen}
-                onToggleLyrics={settings.showKaraokeButton !== false ? handleToggleLyrics : undefined}
-                isSpotifyAuth={isSpotifyAuth}
-                hasSpotifyClientId={Boolean(settings.spotifyClientId)}
-                onConnectSpotify={() => handleConnectSpotify()}
-                onOpenSettings={handleOpenSettings}
               />
             </div>
-
-            {/* Synced Lyrics Drawer */}
-            {isLyricsOpen && (
-              <div className="w-full flex-1 min-h-0 overflow-hidden flex flex-col">
-                <LyricsDrawer
-                  isOpen={isLyricsOpen}
-                  onClose={handleToggleLyrics}
-                  track={track}
-                  onSeek={handleSeek}
-                />
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Temporary Sleek Volume HUD */}
         <VolumeHud

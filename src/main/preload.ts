@@ -8,6 +8,7 @@ const spotiflyAPI: SpotiflyAPI = {
   getAlwaysOnTop: () => ipcRenderer.invoke('window:get-always-on-top'),
   setWindowSize: (width: number, height: number) => ipcRenderer.invoke('window:set-size', width, height),
   animateWindowHeight: (height: number) => ipcRenderer.invoke('window:animate-height', height),
+  setPlayerScale: (scalePercent: number) => ipcRenderer.invoke('window:set-scale', scalePercent),
   startInertialDrag: (clientX: number, clientY: number) => ipcRenderer.send('window:start-inertial-drag', clientX, clientY),
   stopInertialDrag: () => ipcRenderer.send('window:stop-inertial-drag'),
 

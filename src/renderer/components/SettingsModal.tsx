@@ -12,8 +12,8 @@ import {
   RotateCcw,
   Mic2,
   Minimize2,
+  Maximize2,
   Radio,
-  ChevronsDownUp,
 } from 'lucide-react';
 import { SpotiflySettings, HotkeyConfig } from '../../types/player';
 import logoUrl from '../assets/logo.png';
@@ -133,7 +133,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const isEdgeSnapping = settings.enableEdgeSnapping !== false;
   const isUpNextPreview = Boolean(settings.showUpNextPreview);
   const isKaraokeButton = settings.showKaraokeButton !== false;
-  const isCompactMode = Boolean(settings.compactMode);
   const volumeTarget = settings.volumeTarget || 'spotify';
 
   useEffect(() => {
@@ -204,6 +203,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const isMinimal = Boolean(settings.minimalMode);
   const currentOpacity = typeof settings.opacity === 'number' ? settings.opacity : 100;
+  const currentScale = typeof settings.playerScale === 'number' ? settings.playerScale : 100;
 
   const handleToggleShortcut = async () => {
     if (!window.spotifly) return;
@@ -693,48 +693,54 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </div>
 
-          {/* Zip Up / Sized-Down Compact Player Mode Toggle */}
-          <div>
-            <button
-              type="button"
-              onClick={() => onUpdateSettings({ compactMode: !isCompactMode })}
-              className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start justify-between gap-3 ${
-                isCompactMode
-                  ? 'bg-emerald-500/10 border-emerald-500/40'
-                  : 'bg-zinc-800/50 border-white/5 hover:bg-zinc-800'
-              }`}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <ChevronsDownUp
-                    size={14}
-                    className={isCompactMode ? 'text-emerald-400' : 'text-zinc-400'}
-                  />
-                  <span className="font-semibold text-[12px] text-white">
-                    Zip Up / Sized-Down Player
-                  </span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-400 font-mono">
-                    Compact Bar
-                  </span>
-                </div>
-                <p className="text-[10px] text-zinc-400 leading-tight">
-                  Collapses the Always-on-Top player into an ultra-slim 48px bar with mini cover art, marquee title, playback controls, and progress glow.
-                </p>
+          {/* Player Size (Scale) Slider & Presets */}
+          <div className="p-2.5 rounded-xl bg-zinc-800/50 border border-white/5">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <Maximize2 size={14} className="text-emerald-400" />
+                <span className="font-semibold text-[12px] text-white">Player Size (Scale)</span>
               </div>
+              <span className="text-[11px] font-mono font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                {currentScale}%
+              </span>
+            </div>
+            <p className="text-[10px] text-zinc-400 leading-tight mb-2">
+              Size up or size down the miniplayer (50% compact to 200% large).
+            </p>
 
-              {/* Toggle Pill Switch */}
-              <div
-                className={`shrink-0 w-8 h-4.5 rounded-full p-0.5 transition-colors mt-0.5 flex items-center ${
-                  isCompactMode ? 'bg-[#1DB954]' : 'bg-zinc-700'
-                }`}
-              >
-                <div
-                  className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
-                    isCompactMode ? 'translate-x-3.5' : 'translate-x-0'
-                  }`}
-                />
+            {/* Range Slider */}
+            <div className="flex items-center gap-2.5 px-0.5">
+              <input
+                type="range"
+                min="50"
+                max="200"
+                step="5"
+                value={currentScale}
+                onChange={(e) => onUpdateSettings({ playerScale: Number(e.target.value) })}
+                className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-[#1DB954]"
+              />
+            </div>
+
+            {/* Quick Preset Buttons */}
+            <div className="flex items-center justify-between gap-1.5 mt-2 pt-2 border-t border-white/5">
+              <span className="text-[10px] text-zinc-400">Presets:</span>
+              <div className="flex items-center gap-1">
+                {[50, 75, 100, 125, 150, 200].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => onUpdateSettings({ playerScale: preset })}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                      currentScale === preset
+                        ? 'bg-[#1DB954] text-black font-semibold'
+                        : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                    }`}
+                  >
+                    {preset}%
+                  </button>
+                ))}
               </div>
-            </button>
+            </div>
           </div>
 
           {/* Minimal Player Mode Toggle */}

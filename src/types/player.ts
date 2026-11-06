@@ -29,7 +29,7 @@ export interface SpotiflySettings {
   alwaysOnTop: boolean;
   showMarquee: boolean;
   minimalMode?: boolean;
-  compactMode?: boolean;
+  playerScale?: number;
   opacity?: number;
   spotifyClientId?: string;
   spotifyRedirectUri?: string;
@@ -61,6 +61,7 @@ export interface SpotiflyAPI {
   getAlwaysOnTop: () => Promise<boolean>;
   setWindowSize: (width: number, height: number) => Promise<void>;
   animateWindowHeight: (height: number) => Promise<void>;
+  setPlayerScale?: (scalePercent: number) => Promise<void>;
   startInertialDrag: (clientX: number, clientY: number) => void;
   stopInertialDrag: () => void;
 

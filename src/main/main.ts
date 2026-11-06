@@ -91,7 +91,7 @@ const defaultSettings: SpotiflySettings = {
   alwaysOnTop: true,
   showMarquee: true,
   minimalMode: false,
-  compactMode: false,
+  playerScale: 100,
   opacity: 100,
   startOnBoot: true,
   startMinimized: false,
@@ -156,6 +156,9 @@ function saveSettings(settings: Partial<SpotiflySettings>) {
     }
     if (typeof settings.globalHotkeysEnabled === 'boolean' || settings.hotkeys) {
       registerGlobalHotkeys();
+    }
+    if (typeof settings.playerScale === 'number' && settings.playerScale !== currentScalePercent) {
+      applyPlayerScale(settings.playerScale);
     }
   } catch (err) {
     logDebug(`[CONFIG] Failed to save settings: ${err}`);
@@ -269,18 +272,40 @@ function getSavedOrInitialPosition(
   return { x: defaultX, y: defaultY };
 }
 
+let currentScalePercent = 100;
+let currentScaleFactor = 1.0;
+let currentBaseHeight = 142;
+
+function applyPlayerScale(scalePercent: number) {
+  const safePercent = Math.max(50, Math.min(200, scalePercent));
+  currentScalePercent = safePercent;
+  currentScaleFactor = safePercent / 100;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.setZoomFactor(currentScaleFactor);
+    const scaledWidth = Math.round(320 * currentScaleFactor);
+    const scaledHeight = Math.round(currentBaseHeight * currentScaleFactor);
+    mainWindow.setSize(scaledWidth, scaledHeight);
+  }
+}
+
 function createWindow() {
   const settings = loadSettings();
   isAlwaysOnTop = true; // Always default to true so it stays visible on top of Spotify
   const appIcon = createAppIcon();
-  const initialHeight = settings.compactMode ? 48 : (settings.minimalMode ? 72 : 142);
+  currentScalePercent = (typeof settings.playerScale === 'number' && settings.playerScale >= 50 && settings.playerScale <= 200)
+    ? settings.playerScale
+    : 100;
+  currentScaleFactor = currentScalePercent / 100;
+  currentBaseHeight = settings.minimalMode ? 72 : 142;
+  const initialWidth = Math.round(320 * currentScaleFactor);
+  const initialHeight = Math.round(currentBaseHeight * currentScaleFactor);
   targetHeight = initialHeight;
   currentHeight = initialHeight;
 
   const { x: initialX, y: initialY } = getSavedOrInitialPosition(
     settings.windowX,
     settings.windowY,
-    320,
+    initialWidth,
     initialHeight
   );
 
@@ -292,7 +317,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     title: 'Spoti-Fly',
     icon: !appIcon.isEmpty() ? appIcon : undefined,
-    width: 320,
+    width: initialWidth,
     height: initialHeight,
     x: initialX,
     y: initialY,
@@ -314,6 +339,11 @@ function createWindow() {
   // Windows-specific high always-on-top level so Spotify fullscreen does not occlude it
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.setVisibleOnAllWorkspaces(true);
+
+  mainWindow.webContents.setZoomFactor(currentScaleFactor);
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.setZoomFactor(currentScaleFactor);
+  });
 
   // Force all external links (including target="_blank") to open in the user's default system browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -673,8 +703,8 @@ ipcMain.on('window:start-inertial-drag', (_event, clientX: number, clientY: numb
   const [winX, winY] = mainWindow.getPosition();
   currentX = winX;
   currentY = winY;
-  dragOffsetX = clientX;
-  dragOffsetY = clientY;
+  dragOffsetX = Math.round(clientX * currentScaleFactor);
+  dragOffsetY = Math.round(clientY * currentScaleFactor);
   isSmoothDragging = true;
   startSmoothDragLoop();
 });
@@ -832,7 +862,14 @@ function animateToHeight(newHeight: number): Promise<void> {
 }
 
 ipcMain.handle('window:animate-height', async (_event, height: number) => {
-  await animateToHeight(height);
+  currentBaseHeight = height;
+  const scaledHeight = Math.round(height * currentScaleFactor);
+  await animateToHeight(scaledHeight);
+  return true;
+});
+
+ipcMain.handle('window:set-scale', (_event, scalePercent: number) => {
+  applyPlayerScale(scalePercent);
   return true;
 });
 
