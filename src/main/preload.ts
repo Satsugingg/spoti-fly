@@ -73,6 +73,7 @@ const spotiflyAPI: SpotiflyAPI = {
   removeDesktopShortcut: () => ipcRenderer.invoke('shortcut:remove-desktop'),
   getStartOnBoot: () => ipcRenderer.invoke('app:get-start-on-boot'),
   setStartOnBoot: (enabled: boolean) => ipcRenderer.invoke('app:set-start-on-boot', enabled),
+  openExternalUrl: (url: string) => ipcRenderer.invoke('app:open-external', url),
 };
 
 contextBridge.exposeInMainWorld('spotifly', spotiflyAPI);

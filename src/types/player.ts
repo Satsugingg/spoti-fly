@@ -100,6 +100,7 @@ export interface SpotiflyAPI {
   removeDesktopShortcut: () => Promise<boolean>;
   getStartOnBoot: () => Promise<boolean>;
   setStartOnBoot: (enabled: boolean) => Promise<boolean>;
+  openExternalUrl?: (url: string) => Promise<void>;
 }
 
 declare global {

@@ -314,6 +314,24 @@ function createWindow() {
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.setVisibleOnAllWorkspaces(true);
 
+  // Force all external links (including target="_blank") to open in the user's default system browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
+  // Prevent renderer from navigating away to external websites within the Spoti-Fly window
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      if (!url.startsWith('http://localhost:5173')) {
+        event.preventDefault();
+        shell.openExternal(url);
+      }
+    }
+  });
+
   // Load renderer
   const indexPath = path.join(__dirname, '../renderer/index.html');
   const isDev = process.env.NODE_ENV === 'development';
@@ -1068,6 +1086,12 @@ ipcMain.handle('app:set-start-on-boot', (_event, enabled: boolean, startMinimize
   }
   saveSettings(payload);
   return enabled;
+});
+
+ipcMain.handle('app:open-external', async (_event, url: string) => {
+  if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+    await shell.openExternal(url);
+  }
 });
 
 // Volume & Audio Tool Integration (Native Windows Master & App Volume via spotifly_vol.exe)

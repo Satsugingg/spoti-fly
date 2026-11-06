@@ -554,14 +554,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center justify-between text-[10px]">
                         <span className="font-semibold text-zinc-300">Spotify Client ID</span>
-                        <a
-                          href="https://developer.spotify.com/dashboard"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#1DB954] hover:underline flex items-center gap-0.5 text-[9.5px]"
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (window.spotifly?.openExternalUrl) {
+                              window.spotifly.openExternalUrl('https://developer.spotify.com/dashboard');
+                            } else {
+                              window.open('https://developer.spotify.com/dashboard', '_blank');
+                            }
+                          }}
+                          className="text-[#1DB954] hover:underline flex items-center gap-0.5 text-[9.5px] cursor-pointer bg-transparent border-none p-0"
                         >
                           developer.spotify.com ↗
-                        </a>
+                        </button>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <input
@@ -595,8 +601,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                     <div className="text-[9px] text-zinc-400 bg-zinc-900/70 p-2 rounded border border-white/5 space-y-1">
                       <div className="font-semibold text-zinc-300">Quick 1-Minute Setup:</div>
-                      <div>1. Open <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noreferrer" className="text-[#1DB954] underline">developer.spotify.com/dashboard</a> and log in.</div>
-                      <div>2. Click <b>Create App</b>. In App Settings, set Redirect URI to: <span className="font-mono text-emerald-400 select-all bg-black/40 px-1 py-0.5 rounded">http://localhost:8888/callback</span></div>
+                      <div>
+                        1. Open{' '}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (window.spotifly?.openExternalUrl) {
+                              window.spotifly.openExternalUrl('https://developer.spotify.com/dashboard');
+                            } else {
+                              window.open('https://developer.spotify.com/dashboard', '_blank');
+                            }
+                          }}
+                          className="text-[#1DB954] underline bg-transparent border-none p-0 cursor-pointer font-medium"
+                        >
+                          developer.spotify.com/dashboard
+                        </button>{' '}
+                        in your default browser and log in.
+                      </div>
+                      <div>2. Click <b>Create App</b>. In App Settings, add Redirect URI: <span className="font-mono text-emerald-400 select-all bg-black/40 px-1 py-0.5 rounded">http://localhost:8888/callback</span></div>
                       <div>3. Copy your <b>Client ID</b>, paste it above, and click <b>Connect</b>!</div>
                     </div>
                   </div>
