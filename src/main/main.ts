@@ -534,11 +534,13 @@ let isSnappedBottom = false;
 let bounceImpulseX = 0;
 let bounceImpulseY = 0;
 
-const SNAP_MARGIN = 16;          // Inset padding from screen edge for floating aesthetic
-const SNAP_THRESHOLD = 26;       // Threshold in px to trigger magnetic snap
-const BREAKAWAY_THRESHOLD = 38;  // Distance cursor must move to break magnetic pull
-const BOUNCE_AMOUNT = 7;         // Visual bounce amplitude on edge contact
-const LERP_FACTOR = 0.32;        // Fluid dampening factor
+const SNAP_MARGIN = 16;                 // Inset padding from screen edge for floating aesthetic
+const SNAP_THRESHOLD_EDGE = 32;         // Threshold in px to trigger magnetic edge snap
+const SNAP_THRESHOLD_CORNER = 50;       // Threshold in px to trigger magnetic corner snap
+const BREAKAWAY_THRESHOLD_EDGE = 55;    // Distance cursor must move to break edge pull
+const BREAKAWAY_THRESHOLD_CORNER = 110; // Extra strong pull distance required to break corner latch
+const BOUNCE_AMOUNT = 8;                // Visual bounce amplitude on edge contact
+const LERP_FACTOR = 0.32;               // Fluid dampening factor
 
 function startSmoothDragLoop() {
   if (smoothDragTimer) return;
@@ -563,13 +565,26 @@ function startSmoothDragLoop() {
         const minY = workY + SNAP_MARGIN;
         const maxY = workY + workH - winH - SNAP_MARGIN;
 
+        // Corner detection: if docked in a corner, require significantly stronger breakaway pull
+        const isCorner = (isSnappedLeft || isSnappedRight) && (isSnappedTop || isSnappedBottom);
+        const breakawayLimit = isCorner ? BREAKAWAY_THRESHOLD_CORNER : BREAKAWAY_THRESHOLD_EDGE;
+        const stretchMultiplier = isCorner ? 0.04 : 0.08;
+
+        const nearLeft = rawX >= workX - 30 && rawX <= minX + SNAP_THRESHOLD_CORNER;
+        const nearRight = rawX >= maxX - SNAP_THRESHOLD_CORNER && rawX <= workX + workW - winW + 30;
+        const nearTop = rawY >= workY - 30 && rawY <= minY + SNAP_THRESHOLD_CORNER;
+        const nearBottom = rawY >= maxY - SNAP_THRESHOLD_CORNER && rawY <= workY + workH - winH + 30;
+
+        const isApproachingCorner = (nearLeft || nearRight) && (nearTop || nearBottom);
+        const snapThreshold = isApproachingCorner ? SNAP_THRESHOLD_CORNER : SNAP_THRESHOLD_EDGE;
+
         // --- HORIZONTAL MAGNETIC SNAPPING ---
         if (!isSnappedLeft && !isSnappedRight) {
-          if (rawX >= workX - 20 && rawX <= minX + SNAP_THRESHOLD) {
+          if (rawX >= workX - 25 && rawX <= minX + snapThreshold) {
             isSnappedLeft = true;
             bounceImpulseX = BOUNCE_AMOUNT;
             targetX = minX;
-          } else if (rawX >= maxX - SNAP_THRESHOLD && rawX <= workX + workW - winW + 20) {
+          } else if (rawX >= maxX - snapThreshold && rawX <= workX + workW - winW + 25) {
             isSnappedRight = true;
             bounceImpulseX = -BOUNCE_AMOUNT;
             targetX = maxX;
@@ -580,8 +595,8 @@ function startSmoothDragLoop() {
           const pullDelta = rawX - minX;
           if (pullDelta < 0) {
             targetX = minX;
-          } else if (pullDelta < BREAKAWAY_THRESHOLD) {
-            targetX = minX + pullDelta * 0.12;
+          } else if (pullDelta < breakawayLimit) {
+            targetX = minX + pullDelta * stretchMultiplier;
           } else {
             isSnappedLeft = false;
             targetX = rawX;
@@ -590,8 +605,8 @@ function startSmoothDragLoop() {
           const pullDelta = maxX - rawX;
           if (pullDelta < 0) {
             targetX = maxX;
-          } else if (pullDelta < BREAKAWAY_THRESHOLD) {
-            targetX = maxX - pullDelta * 0.12;
+          } else if (pullDelta < breakawayLimit) {
+            targetX = maxX - pullDelta * stretchMultiplier;
           } else {
             isSnappedRight = false;
             targetX = rawX;
@@ -600,11 +615,11 @@ function startSmoothDragLoop() {
 
         // --- VERTICAL MAGNETIC SNAPPING ---
         if (!isSnappedTop && !isSnappedBottom) {
-          if (rawY >= workY - 20 && rawY <= minY + SNAP_THRESHOLD) {
+          if (rawY >= workY - 25 && rawY <= minY + snapThreshold) {
             isSnappedTop = true;
             bounceImpulseY = BOUNCE_AMOUNT;
             targetY = minY;
-          } else if (rawY >= maxY - SNAP_THRESHOLD && rawY <= workY + workH - winH + 20) {
+          } else if (rawY >= maxY - snapThreshold && rawY <= workY + workH - winH + 25) {
             isSnappedBottom = true;
             bounceImpulseY = -BOUNCE_AMOUNT;
             targetY = maxY;
@@ -615,8 +630,8 @@ function startSmoothDragLoop() {
           const pullDelta = rawY - minY;
           if (pullDelta < 0) {
             targetY = minY;
-          } else if (pullDelta < BREAKAWAY_THRESHOLD) {
-            targetY = minY + pullDelta * 0.12;
+          } else if (pullDelta < breakawayLimit) {
+            targetY = minY + pullDelta * stretchMultiplier;
           } else {
             isSnappedTop = false;
             targetY = rawY;
@@ -625,8 +640,8 @@ function startSmoothDragLoop() {
           const pullDelta = maxY - rawY;
           if (pullDelta < 0) {
             targetY = maxY;
-          } else if (pullDelta < BREAKAWAY_THRESHOLD) {
-            targetY = maxY - pullDelta * 0.12;
+          } else if (pullDelta < breakawayLimit) {
+            targetY = maxY - pullDelta * stretchMultiplier;
           } else {
             isSnappedBottom = false;
             targetY = rawY;
