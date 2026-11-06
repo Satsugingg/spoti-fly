@@ -45,11 +45,8 @@ try {
 
 try {
   if (app.isPackaged) {
-    app.setLoginItemSettings({
-      openAtLogin: true,
-      path: process.execPath,
-      args: ['--autostart'],
-    });
+    const initialSettings = loadSettings();
+    applyStartOnBoot(initialSettings.startOnBoot !== false, Boolean(initialSettings.startMinimized));
 
     const desktopPath = app.getPath('desktop');
     const shortcutPath = path.join(desktopPath, 'Spoti-Fly.lnk');
@@ -96,6 +93,7 @@ const defaultSettings: SpotiflySettings = {
   minimalMode: false,
   opacity: 100,
   startOnBoot: true,
+  startMinimized: false,
   volumeTarget: 'spotify',
   globalHotkeysEnabled: true,
   hotkeys: { ...DEFAULT_HOTKEYS },
@@ -105,15 +103,18 @@ const defaultSettings: SpotiflySettings = {
   showKaraokeButton: true,
 };
 
-function applyStartOnBoot(enabled: boolean) {
+function applyStartOnBoot(enabled: boolean, startMinimized: boolean = false) {
   try {
     if (app.isPackaged) {
+      const args = enabled
+        ? (startMinimized ? ['--autostart', '--minimized'] : ['--autostart'])
+        : [];
       app.setLoginItemSettings({
         openAtLogin: enabled,
         path: process.execPath,
-        args: ['--autostart'],
+        args: args,
       });
-      logDebug(`[AUTOSTART] Applied openAtLogin: ${enabled}`);
+      logDebug(`[AUTOSTART] Applied openAtLogin: ${enabled}, args: ${JSON.stringify(args)}`);
     }
   } catch (err: any) {
     logDebug(`[AUTOSTART] Login item update error: ${err?.message}`);
@@ -149,8 +150,8 @@ function saveSettings(settings: Partial<SpotiflySettings>) {
     };
     fs.writeFileSync(configPath, JSON.stringify(updated, null, 2), 'utf8');
 
-    if (typeof settings.startOnBoot === 'boolean') {
-      applyStartOnBoot(settings.startOnBoot);
+    if (typeof settings.startOnBoot === 'boolean' || typeof settings.startMinimized === 'boolean') {
+      applyStartOnBoot(updated.startOnBoot !== false, Boolean(updated.startMinimized));
     }
     if (typeof settings.globalHotkeysEnabled === 'boolean' || settings.hotkeys) {
       registerGlobalHotkeys();
@@ -337,14 +338,18 @@ function createWindow() {
 
   mainWindow.webContents.on('did-finish-load', () => {
     logDebug(`[RENDERER] did-finish-load successfully at bounds: ${JSON.stringify(mainWindow?.getBounds())}`);
-    const isAutostart = process.argv.includes('--autostart') || process.argv.includes('--minimized') || process.argv.includes('--hidden');
+    const isAutostart = process.argv.includes('--autostart');
+    const isExplicitMinimized = process.argv.includes('--minimized') || process.argv.includes('--hidden');
+    const s = loadSettings();
+    const shouldStartMinimized = isExplicitMinimized || (isAutostart && s.startMinimized === true);
+
     if (mainWindow && !mainWindow.isDestroyed()) {
-      if (!isAutostart) {
+      if (!isAutostart || !shouldStartMinimized) {
         mainWindow.show();
         mainWindow.focus();
         mainWindow.moveTop();
       } else {
-        logDebug('[APP] Started in background/autostart mode. Window remains hidden until summoned.');
+        logDebug('[APP] Started in background/minimized mode on Windows boot. Window remains hidden until summoned.');
       }
     }
   });
@@ -1056,8 +1061,12 @@ ipcMain.handle('app:get-start-on-boot', () => {
   }
 });
 
-ipcMain.handle('app:set-start-on-boot', (_event, enabled: boolean) => {
-  saveSettings({ startOnBoot: enabled });
+ipcMain.handle('app:set-start-on-boot', (_event, enabled: boolean, startMinimized?: boolean) => {
+  const payload: Partial<SpotiflySettings> = { startOnBoot: enabled };
+  if (typeof startMinimized === 'boolean') {
+    payload.startMinimized = startMinimized;
+  }
+  saveSettings(payload);
   return enabled;
 });
 

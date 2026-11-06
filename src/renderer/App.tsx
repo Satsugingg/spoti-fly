@@ -58,6 +58,7 @@ export const App: React.FC = () => {
     showMarquee: true,
     minimalMode: false,
     startOnBoot: true,
+    startMinimized: false,
     volumeTarget: 'spotify',
     globalHotkeysEnabled: true,
     hotkeys: { ...DEFAULT_HOTKEYS },

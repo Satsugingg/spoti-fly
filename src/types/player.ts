@@ -32,6 +32,7 @@ export interface SpotiflySettings {
   opacity?: number;
   spotifyClientId?: string;
   startOnBoot?: boolean;
+  startMinimized?: boolean;
   windowX?: number;
   windowY?: number;
   volumeTarget?: 'spotify' | 'system';
