@@ -39,6 +39,7 @@ export interface SpotiflySettings {
   windowX?: number;
   windowY?: number;
   volumeTarget?: 'spotify' | 'system';
+  enableScrollVolume?: boolean;
   globalHotkeysEnabled?: boolean;
   hotkeys?: HotkeyConfig;
   enableEdgeSnapping?: boolean;

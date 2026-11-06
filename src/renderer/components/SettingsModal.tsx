@@ -133,7 +133,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const isEdgeSnapping = settings.enableEdgeSnapping !== false;
   const isUpNextPreview = Boolean(settings.showUpNextPreview);
   const isKaraokeButton = settings.showKaraokeButton !== false;
-  const volumeTarget = settings.volumeTarget || 'spotify';
+  const isScrollVolume = settings.enableScrollVolume !== false;
 
   useEffect(() => {
     if (!recordingAction) {
@@ -255,43 +255,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Settings List */}
         <div className="scrollable-area space-y-2 mt-2.5 max-h-[350px] overflow-y-auto pr-0.5 scrollbar-none">
-          {/* Scroll Wheel Volume Target */}
-          <div className="p-2.5 rounded-xl bg-zinc-800/50 border border-white/5">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Volume2 size={14} className="text-[#1DB954]" />
-              <span className="font-semibold text-[12px] text-white">
-                Scroll Wheel Volume Target
-              </span>
-            </div>
-            <p className="text-[10px] text-zinc-400 leading-tight mb-2">
-              Scroll mouse wheel anywhere over player to adjust volume.
-            </p>
+          {/* Scroll Wheel Volume Control Toggle */}
+          <div
+            className={`w-full p-2.5 rounded-xl border transition-all text-left ${
+              isScrollVolume
+                ? 'bg-emerald-500/10 border-emerald-500/40'
+                : 'bg-zinc-800/50 border-white/5'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => onUpdateSettings({ enableScrollVolume: !isScrollVolume })}
+              className="w-full flex items-start justify-between gap-3 text-left"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Volume2
+                    size={14}
+                    className={isScrollVolume ? 'text-emerald-400' : 'text-zinc-400'}
+                  />
+                  <span className="font-semibold text-[12px] text-white">
+                    Scroll Wheel Volume Control
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-400 leading-tight">
+                  Scroll mouse wheel anywhere over player to adjust Windows master volume.
+                </p>
+              </div>
 
-            {/* Segmented selector */}
-            <div className="grid grid-cols-2 gap-1 bg-black/40 p-1 rounded-lg border border-white/5">
-              <button
-                type="button"
-                onClick={() => onUpdateSettings({ volumeTarget: 'spotify' })}
-                className={`py-1 px-2 rounded-md text-[11px] font-medium transition-all ${
-                  volumeTarget === 'spotify'
-                    ? 'bg-[#1DB954] text-black font-semibold shadow-sm'
-                    : 'text-zinc-400 hover:text-white'
+              {/* Toggle Pill Switch */}
+              <div
+                className={`shrink-0 w-8 h-4.5 rounded-full p-0.5 transition-colors mt-0.5 flex items-center ${
+                  isScrollVolume ? 'bg-[#1DB954]' : 'bg-zinc-700'
                 }`}
               >
-                Spotify App
-              </button>
-              <button
-                type="button"
-                onClick={() => onUpdateSettings({ volumeTarget: 'system' })}
-                className={`py-1 px-2 rounded-md text-[11px] font-medium transition-all ${
-                  volumeTarget === 'system'
-                    ? 'bg-[#1DB954] text-black font-semibold shadow-sm'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                Windows Master
-              </button>
-            </div>
+                <div
+                  className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
+                    isScrollVolume ? 'translate-x-3.5' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </button>
           </div>
 
           {/* Global Hotkeys Toggle & Cheat-sheet */}

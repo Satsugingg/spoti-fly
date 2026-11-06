@@ -60,7 +60,8 @@ export const App: React.FC = () => {
     playerScale: 100,
     startOnBoot: true,
     startMinimized: false,
-    volumeTarget: 'spotify',
+    volumeTarget: 'system',
+    enableScrollVolume: true,
     globalHotkeysEnabled: true,
     hotkeys: { ...DEFAULT_HOTKEYS },
     enableEdgeSnapping: true,
@@ -129,27 +130,19 @@ export const App: React.FC = () => {
 
   const triggerVolumeChange = useCallback(
     (delta: number) => {
-      const currentTarget = settingsRef.current.volumeTarget || 'spotify';
-      if (currentTarget === 'spotify' && isSpotifyAuth && spotifyApi.isAuthenticated()) {
-        const nextVol = Math.max(0, Math.min(100, lastSpotifyVolRef.current + delta));
-        lastSpotifyVolRef.current = nextVol;
-        spotifyApi.setVolume(nextVol);
-        showVolumeHud(nextVol, 'spotify');
-        return;
-      }
-
       if (window.spotifly?.adjustVolume) {
-        window.spotifly.adjustVolume(delta, currentTarget).then((newVol) => {
-          showVolumeHud(newVol, currentTarget);
+        window.spotifly.adjustVolume(delta, 'system').then((newVol) => {
+          showVolumeHud(newVol, 'system');
         });
       }
     },
-    [isSpotifyAuth, showVolumeHud]
+    [showVolumeHud]
   );
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     if (target.closest('.scrollable-area') || isSettingsOpenRef.current) return;
+    if (settingsRef.current.enableScrollVolume === false) return;
 
     e.preventDefault();
     const delta = e.deltaY < 0 ? 5 : -5;

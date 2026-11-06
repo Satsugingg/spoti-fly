@@ -111,7 +111,8 @@ const defaultSettings: SpotiflySettings = {
   opacity: 100,
   startOnBoot: true,
   startMinimized: false,
-  volumeTarget: 'spotify',
+  volumeTarget: 'system',
+  enableScrollVolume: true,
   globalHotkeysEnabled: true,
   hotkeys: { ...DEFAULT_HOTKEYS },
   enableEdgeSnapping: true,
@@ -1259,14 +1260,9 @@ function registerGlobalHotkeys() {
       name: 'Volume Up',
       action: () => {
         logDebug('[HOTKEY] Volume Up triggered');
-        const s = loadSettings();
-        if (s.volumeTarget === 'system') {
-          execVolTool('change-master', 5).then((vol) => {
-            mainWindow?.webContents.send('volume:changed', { percent: vol, target: 'system' });
-          });
-        } else {
-          mainWindow?.webContents.send('hotkey:trigger', 'volume_up');
-        }
+        execVolTool('change-master', 5).then((vol) => {
+          mainWindow?.webContents.send('volume:changed', { percent: vol, target: 'system' });
+        });
       },
     },
     {
@@ -1274,14 +1270,9 @@ function registerGlobalHotkeys() {
       name: 'Volume Down',
       action: () => {
         logDebug('[HOTKEY] Volume Down triggered');
-        const s = loadSettings();
-        if (s.volumeTarget === 'system') {
-          execVolTool('change-master', -5).then((vol) => {
-            mainWindow?.webContents.send('volume:changed', { percent: vol, target: 'system' });
-          });
-        } else {
-          mainWindow?.webContents.send('hotkey:trigger', 'volume_down');
-        }
+        execVolTool('change-master', -5).then((vol) => {
+          mainWindow?.webContents.send('volume:changed', { percent: vol, target: 'system' });
+        });
       },
     },
     {
@@ -1324,25 +1315,20 @@ function unregisterGlobalHotkeys() {
   } catch {}
 }
 
-ipcMain.handle('volume:adjust', async (_event, deltaPercent: number, target: 'spotify' | 'system' = 'spotify') => {
-  if (target === 'system') {
-    const newVol = await execVolTool('change-master', deltaPercent);
-    mainWindow?.webContents.send('volume:changed', { percent: newVol, target: 'system' });
-    return newVol;
-  }
+ipcMain.handle('volume:adjust', async (_event, deltaPercent: number) => {
   const newVol = await execVolTool('change-master', deltaPercent);
-  mainWindow?.webContents.send('volume:changed', { percent: newVol, target: 'spotify' });
+  mainWindow?.webContents.send('volume:changed', { percent: newVol, target: 'system' });
   return newVol;
 });
 
-ipcMain.handle('volume:get', async (_event, _target: 'spotify' | 'system' = 'spotify') => {
+ipcMain.handle('volume:get', async () => {
   const vol = await execVolTool('get-master');
   return vol;
 });
 
-ipcMain.handle('volume:set', async (_event, percent: number, target: 'spotify' | 'system' = 'spotify') => {
+ipcMain.handle('volume:set', async (_event, percent: number) => {
   const vol = await execVolTool('set-master', percent);
-  mainWindow?.webContents.send('volume:changed', { percent: vol, target });
+  mainWindow?.webContents.send('volume:changed', { percent: vol, target: 'system' });
   return vol;
 });
 
