@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Mic2,
   Minimize2,
+  Radio,
 } from 'lucide-react';
 import { SpotiflySettings, HotkeyConfig } from '../../types/player';
 import logoUrl from '../assets/logo.png';
@@ -99,6 +100,9 @@ interface SettingsModalProps {
   onClose: () => void;
   settings: SpotiflySettings;
   onUpdateSettings: (newSettings: Partial<SpotiflySettings>) => void;
+  isSpotifyAuth?: boolean;
+  onConnectSpotify?: () => void;
+  onDisconnectSpotify?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -107,6 +111,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   settings,
   onUpdateSettings,
+  isSpotifyAuth = false,
+  onConnectSpotify,
+  onDisconnectSpotify,
 }) => {
   const [hasShortcut, setHasShortcut] = useState(false);
   const [recordingAction, setRecordingAction] = useState<keyof HotkeyConfig | null>(null);
@@ -462,15 +469,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Up Next Preview Toggle */}
-          <div>
+          <div
+            className={`w-full p-2.5 rounded-xl border transition-all text-left ${
+              isUpNextPreview
+                ? 'bg-emerald-500/10 border-emerald-500/40'
+                : 'bg-zinc-800/50 border-white/5'
+            }`}
+          >
             <button
               type="button"
               onClick={() => onUpdateSettings({ showUpNextPreview: !isUpNextPreview })}
-              className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start justify-between gap-3 ${
-                isUpNextPreview
-                  ? 'bg-emerald-500/10 border-emerald-500/40'
-                  : 'bg-zinc-800/50 border-white/5 hover:bg-zinc-800'
-              }`}
+              className="w-full flex items-start justify-between gap-3 text-left"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
@@ -500,6 +509,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
               </div>
             </button>
+
+            {/* Spotify Account Connection for Up Next Queue */}
+            {isUpNextPreview && (
+              <div className="mt-2.5 pt-2 border-t border-white/10 pl-2 border-l-2 border-[#1DB954]/50 ml-0.5 flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <Radio size={12} className={isSpotifyAuth ? 'text-emerald-400' : 'text-zinc-400'} />
+                    <span className="text-[11px] font-semibold text-white">
+                      Spotify Queue Sync
+                    </span>
+                    {isSpotifyAuth && (
+                      <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-mono">
+                        Connected
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[9.5px] text-zinc-400 leading-tight mt-0.5">
+                    {isSpotifyAuth
+                      ? 'Queue data is syncing in real-time for upcoming track previews.'
+                      : 'Connect your Spotify account to read upcoming songs in queue.'}
+                  </p>
+                </div>
+                {isSpotifyAuth ? (
+                  <button
+                    type="button"
+                    onClick={onDisconnectSpotify}
+                    className="shrink-0 px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-medium transition-colors"
+                  >
+                    Disconnect
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onConnectSpotify}
+                    className="shrink-0 px-2.5 py-1 rounded-md bg-[#1DB954] hover:bg-[#1ed760] text-black text-[10px] font-bold transition-colors shadow"
+                  >
+                    Connect
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Karaoke / Synced Lyrics Button Toggle */}

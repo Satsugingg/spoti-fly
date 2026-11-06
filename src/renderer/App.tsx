@@ -479,18 +479,19 @@ export const App: React.FC = () => {
   }, [handleTogglePlay, handleNext, handlePrevious, showVolumeHud, triggerVolumeChange]);
 
   // Spotify PKCE Connect
-  const handleConnectSpotify = async (clientId: string) => {
+  const handleConnectSpotify = async (clientId?: string) => {
     if (!window.spotifly) throw new Error('Electron bridge not found');
-    spotifyApi.setClientId(clientId);
+    const targetId = clientId || settings.spotifyClientId || '204856f709124a98a08a213329f635c9';
+    spotifyApi.setClientId(targetId);
 
-    const res = await window.spotifly.startSpotifyAuth(clientId);
+    const res = await window.spotifly.startSpotifyAuth(targetId);
     if ('error' in res) {
       throw new Error(res.error);
     }
 
     // Exchange auth code for tokens
     const body = new URLSearchParams({
-      client_id: clientId,
+      client_id: targetId,
       grant_type: 'authorization_code',
       code: res.code,
       redirect_uri: res.redirectUri,
@@ -646,6 +647,8 @@ export const App: React.FC = () => {
               onFetchUpNext={handleFetchUpNext}
               isLyricsOpen={isLyricsOpen}
               onToggleLyrics={settings.showKaraokeButton !== false ? handleToggleLyrics : undefined}
+              isSpotifyAuth={isSpotifyAuth}
+              onConnectSpotify={() => handleConnectSpotify()}
             />
           </div>
 
@@ -677,6 +680,9 @@ export const App: React.FC = () => {
             onClose={handleCloseSettings}
             settings={settings}
             onUpdateSettings={handleUpdateSettings}
+            isSpotifyAuth={isSpotifyAuth}
+            onConnectSpotify={() => handleConnectSpotify()}
+            onDisconnectSpotify={handleDisconnectSpotify}
           />
         </ErrorBoundary>
       </div>
