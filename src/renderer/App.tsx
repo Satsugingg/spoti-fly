@@ -481,7 +481,11 @@ export const App: React.FC = () => {
   // Spotify PKCE Connect
   const handleConnectSpotify = async (clientId?: string) => {
     if (!window.spotifly) throw new Error('Electron bridge not found');
-    const targetId = clientId || settings.spotifyClientId || '204856f709124a98a08a213329f635c9';
+    const targetId = clientId || settings.spotifyClientId;
+    if (!targetId) {
+      handleOpenSettings();
+      return;
+    }
     spotifyApi.setClientId(targetId);
 
     const res = await window.spotifly.startSpotifyAuth(targetId);
@@ -648,7 +652,9 @@ export const App: React.FC = () => {
               isLyricsOpen={isLyricsOpen}
               onToggleLyrics={settings.showKaraokeButton !== false ? handleToggleLyrics : undefined}
               isSpotifyAuth={isSpotifyAuth}
+              hasSpotifyClientId={Boolean(settings.spotifyClientId)}
               onConnectSpotify={() => handleConnectSpotify()}
+              onOpenSettings={handleOpenSettings}
             />
           </div>
 
@@ -681,7 +687,7 @@ export const App: React.FC = () => {
             settings={settings}
             onUpdateSettings={handleUpdateSettings}
             isSpotifyAuth={isSpotifyAuth}
-            onConnectSpotify={() => handleConnectSpotify()}
+            onConnectSpotify={(id) => handleConnectSpotify(id)}
             onDisconnectSpotify={handleDisconnectSpotify}
           />
         </ErrorBoundary>

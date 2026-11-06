@@ -101,7 +101,7 @@ interface SettingsModalProps {
   settings: SpotiflySettings;
   onUpdateSettings: (newSettings: Partial<SpotiflySettings>) => void;
   isSpotifyAuth?: boolean;
-  onConnectSpotify?: () => void;
+  onConnectSpotify?: (clientId?: string) => void;
   onDisconnectSpotify?: () => void;
 }
 
@@ -118,6 +118,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [hasShortcut, setHasShortcut] = useState(false);
   const [recordingAction, setRecordingAction] = useState<keyof HotkeyConfig | null>(null);
   const [recordingStatus, setRecordingStatus] = useState<string | null>(null);
+  const [clientIdInput, setClientIdInput] = useState(settings.spotifyClientId || '');
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setClientIdInput(settings.spotifyClientId || '');
+  }, [settings.spotifyClientId]);
 
   const isStartOnBoot = settings.startOnBoot !== false;
   const isStartMinimized = Boolean(settings.startMinimized);
@@ -512,41 +518,88 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Spotify Account Connection for Up Next Queue */}
             {isUpNextPreview && (
-              <div className="mt-2.5 pt-2 border-t border-white/10 pl-2 border-l-2 border-[#1DB954]/50 ml-0.5 flex items-center justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <Radio size={12} className={isSpotifyAuth ? 'text-emerald-400' : 'text-zinc-400'} />
-                    <span className="text-[11px] font-semibold text-white">
-                      Spotify Queue Sync
-                    </span>
-                    {isSpotifyAuth && (
-                      <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-mono">
-                        Connected
+              <div className="mt-2.5 pt-2 border-t border-white/10 pl-2 border-l-2 border-[#1DB954]/50 ml-0.5 flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <Radio size={12} className={isSpotifyAuth ? 'text-emerald-400' : 'text-zinc-400'} />
+                      <span className="text-[11px] font-semibold text-white">
+                        Spotify Queue Sync
                       </span>
-                    )}
+                      {isSpotifyAuth && (
+                        <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-mono">
+                          Connected
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[9.5px] text-zinc-400 leading-tight mt-0.5">
+                      {isSpotifyAuth
+                        ? 'Queue data is syncing in real-time for upcoming track previews.'
+                        : 'Windows media controls (GSMTC) only expose the active song. To show the Up Next queue, Spotify requires a registered Client ID.'}
+                    </p>
                   </div>
-                  <p className="text-[9.5px] text-zinc-400 leading-tight mt-0.5">
-                    {isSpotifyAuth
-                      ? 'Queue data is syncing in real-time for upcoming track previews.'
-                      : 'Connect your Spotify account to read upcoming songs in queue.'}
-                  </p>
+                  {isSpotifyAuth && (
+                    <button
+                      type="button"
+                      onClick={onDisconnectSpotify}
+                      className="shrink-0 px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-medium transition-colors"
+                    >
+                      Disconnect
+                    </button>
+                  )}
                 </div>
-                {isSpotifyAuth ? (
-                  <button
-                    type="button"
-                    onClick={onDisconnectSpotify}
-                    className="shrink-0 px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-medium transition-colors"
-                  >
-                    Disconnect
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={onConnectSpotify}
-                    className="shrink-0 px-2.5 py-1 rounded-md bg-[#1DB954] hover:bg-[#1ed760] text-black text-[10px] font-bold transition-colors shadow"
-                  >
-                    Connect
-                  </button>
+
+                {!isSpotifyAuth && (
+                  <div className="flex flex-col gap-2 bg-black/40 p-2.5 rounded-lg border border-white/5">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="font-semibold text-zinc-300">Spotify Client ID</span>
+                        <a
+                          href="https://developer.spotify.com/dashboard"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[#1DB954] hover:underline flex items-center gap-0.5 text-[9.5px]"
+                        >
+                          developer.spotify.com ↗
+                        </a>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={clientIdInput}
+                          onChange={(e) => {
+                            setClientIdInput(e.target.value.trim());
+                            setAuthError(null);
+                          }}
+                          placeholder="Paste 32-character Client ID"
+                          className="flex-1 px-2 py-1 rounded bg-zinc-900 border border-white/10 text-white text-[10px] font-mono focus:border-[#1DB954] focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!clientIdInput) return;
+                            setAuthError(null);
+                            onUpdateSettings({ spotifyClientId: clientIdInput });
+                            onConnectSpotify?.(clientIdInput);
+                          }}
+                          disabled={!clientIdInput}
+                          className="shrink-0 px-2.5 py-1 rounded bg-[#1DB954] hover:bg-[#1ed760] disabled:bg-zinc-800 disabled:text-zinc-600 text-black text-[10px] font-bold transition-colors shadow"
+                        >
+                          Connect
+                        </button>
+                      </div>
+                      {authError && (
+                        <p className="text-[9px] text-rose-400 mt-0.5">{authError}</p>
+                      )}
+                    </div>
+
+                    <div className="text-[9px] text-zinc-400 bg-zinc-900/70 p-2 rounded border border-white/5 space-y-1">
+                      <div className="font-semibold text-zinc-300">Quick 1-Minute Setup:</div>
+                      <div>1. Open <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noreferrer" className="text-[#1DB954] underline">developer.spotify.com/dashboard</a> and log in.</div>
+                      <div>2. Click <b>Create App</b>. In App Settings, set Redirect URI to: <span className="font-mono text-emerald-400 select-all bg-black/40 px-1 py-0.5 rounded">http://localhost:8888/callback</span></div>
+                      <div>3. Copy your <b>Client ID</b>, paste it above, and click <b>Connect</b>!</div>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

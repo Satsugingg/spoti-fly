@@ -36,7 +36,9 @@ interface PlayerCardProps {
   isLyricsOpen?: boolean;
   onToggleLyrics?: () => void;
   isSpotifyAuth?: boolean;
+  hasSpotifyClientId?: boolean;
   onConnectSpotify?: () => void;
+  onOpenSettings?: () => void;
 }
 
 function formatTime(totalSeconds: number): string {
@@ -61,7 +63,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   isLyricsOpen = false,
   onToggleLyrics,
   isSpotifyAuth = false,
+  hasSpotifyClientId = false,
   onConnectSpotify,
+  onOpenSettings,
 }) => {
   // Local smooth playback progress extrapolation
   const [localPos, setLocalPos] = useState(track.position);
@@ -298,7 +302,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               <p className="text-[10.5px] text-zinc-400 leading-tight">
                 Fetching upcoming queue...
               </p>
-            ) : (
+            ) : hasSpotifyClientId ? (
               <div className="flex items-center justify-between gap-1.5">
                 <span className="text-[9.5px] text-zinc-300 truncate">
                   Connect Spotify to preview queue
@@ -312,6 +316,22 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                   className="px-2 py-0.5 rounded bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold text-[9.5px] shrink-0 shadow flex items-center gap-1 transition-colors"
                 >
                   <Radio size={10} /> Connect 1-Click
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[9.5px] text-zinc-300 truncate">
+                  Setup Client ID to sync queue
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenSettings?.();
+                  }}
+                  className="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-[9.5px] shrink-0 shadow flex items-center gap-1 transition-colors border border-white/10"
+                >
+                  Setup in Settings ⚙
                 </button>
               </div>
             )}
