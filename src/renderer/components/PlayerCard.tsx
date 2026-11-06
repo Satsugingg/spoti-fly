@@ -16,9 +16,10 @@ import { TrackState } from '../../types/player';
 import logoUrl from '../assets/logo.png';
 
 interface UpNextData {
-  title: string;
-  artist: string;
+  title?: string;
+  artist?: string;
   artworkUrl?: string | null;
+  error?: string;
 }
 
 interface PlayerCardProps {
@@ -436,10 +437,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               <span className="text-[#1DB954] font-bold text-[8px] uppercase tracking-wider shrink-0">
                 Next:
               </span>
-              {upNextTrack ? (
+              {upNextTrack?.title ? (
                 <span className="text-zinc-300 truncate">
                   <span className="font-semibold text-white">{upNextTrack.title}</span>
-                  <span className="text-zinc-400"> • {upNextTrack.artist}</span>
+                  {upNextTrack.artist && (
+                    <span className="text-zinc-400"> • {upNextTrack.artist}</span>
+                  )}
+                </span>
+              ) : upNextTrack?.error === 'PREMIUM_REQUIRED' ? (
+                <span className="text-amber-400/90 truncate text-[8.5px]">
+                  Spotify requires Premium for queue data
                 </span>
               ) : isSpotifyAuth ? (
                 <span className="text-zinc-500 italic truncate text-[8.5px]">

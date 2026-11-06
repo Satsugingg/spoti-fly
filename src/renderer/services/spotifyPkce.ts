@@ -208,13 +208,21 @@ export class SpotifyApiClient {
     }
   }
 
-  public async fetchQueueNext(): Promise<{ title: string; artist: string; artworkUrl: string | null } | null> {
+  public async fetchQueueNext(): Promise<{
+    title?: string;
+    artist?: string;
+    artworkUrl?: string | null;
+    error?: string;
+  } | null> {
     const token = await this.getValidAccessToken();
     if (!token) return null;
     try {
       const res = await fetch('https://api.spotify.com/v1/me/player/queue', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 403) {
+        return { error: 'PREMIUM_REQUIRED' };
+      }
       if (res.ok) {
         const data = await res.json();
         if (data.queue && data.queue.length > 0) {

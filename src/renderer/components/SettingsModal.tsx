@@ -536,7 +536,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <p className="text-[9.5px] text-zinc-400 leading-tight mt-0.5">
                       {isSpotifyAuth
                         ? 'Queue data is syncing in real-time for upcoming track previews.'
-                        : 'Windows media controls (GSMTC) only expose the active song. To show the Up Next queue, Spotify requires a registered Client ID.'}
+                        : 'Windows media controls (GSMTC) only expose the active song. Note: Spotify restricts their Web API queue endpoint to Spotify Premium accounts.'}
                     </p>
                   </div>
                   {isSpotifyAuth && (
