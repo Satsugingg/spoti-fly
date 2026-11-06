@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pin, X, Settings2, Minus, Mic2 } from 'lucide-react';
+import { Pin, X, Settings2, Minus, Mic2, ChevronsDownUp } from 'lucide-react';
 import logoUrl from '../assets/logo.png';
 
 interface TopBarProps {
@@ -12,6 +12,7 @@ interface TopBarProps {
   isVisible?: boolean;
   isLyricsOpen?: boolean;
   onToggleLyrics?: () => void;
+  onToggleZip?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -24,9 +25,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   isVisible = true,
   isLyricsOpen = false,
   onToggleLyrics,
+  onToggleZip,
 }) => {
   return (
     <header
+      onDoubleClick={onToggleZip}
       className={`app-drag w-full flex items-center justify-between px-3 text-white select-none transition-all duration-300 ease-out ${
         isVisible
           ? 'max-h-8 opacity-60 hover:opacity-100 pt-1 pb-0.5 pointer-events-auto'
@@ -78,6 +81,17 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <Pin size={13} className="stroke-[2.2]" />
         </button>
+
+        {/* Zip Up / Size Down Button */}
+        {onToggleZip && (
+          <button
+            onClick={onToggleZip}
+            title="Zip up miniplayer (Size down to compact bar)"
+            className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors duration-150"
+          >
+            <ChevronsDownUp size={13} className="stroke-[2.2]" />
+          </button>
+        )}
 
         {/* Settings Button */}
         <button

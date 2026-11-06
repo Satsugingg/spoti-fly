@@ -29,6 +29,7 @@ export interface SpotiflySettings {
   alwaysOnTop: boolean;
   showMarquee: boolean;
   minimalMode?: boolean;
+  compactMode?: boolean;
   opacity?: number;
   spotifyClientId?: string;
   spotifyRedirectUri?: string;

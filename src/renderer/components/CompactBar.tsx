@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, Pin } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Pin, Settings2, ChevronsUpDown } from 'lucide-react';
 import { MarqueeText } from './MarqueeText';
 import { TrackState } from '../../types/player';
 import logoUrl from '../assets/logo.png';
@@ -8,16 +8,22 @@ interface CompactBarProps {
   track: TrackState;
   onTogglePlay: () => void;
   onNext: () => void;
+  onPrevious?: () => void;
   onTogglePin: () => void;
   isPinned: boolean;
+  onOpenSettings?: () => void;
+  onToggleZip?: () => void;
 }
 
 export const CompactBar: React.FC<CompactBarProps> = ({
   track,
   onTogglePlay,
   onNext,
+  onPrevious,
   onTogglePin,
   isPinned,
+  onOpenSettings,
+  onToggleZip,
 }) => {
   const progressPercent =
     track.duration > 0
@@ -25,7 +31,11 @@ export const CompactBar: React.FC<CompactBarProps> = ({
       : 0;
 
   return (
-    <div className="w-full h-full px-2.5 flex items-center justify-between select-none relative">
+    <div
+      onDoubleClick={onToggleZip}
+      className="w-full h-full px-2.5 flex items-center justify-between select-none relative group/bar"
+      title="Double-click to expand / unzip miniplayer"
+    >
       {/* Left: Thumbnail & Track Info */}
       <div className="flex items-center min-w-0 flex-1 mr-2">
         <div className="app-no-drag w-[28px] h-[28px] rounded-lg overflow-hidden border border-white/15 bg-zinc-900/90 shrink-0 flex items-center justify-center shadow">
@@ -45,7 +55,7 @@ export const CompactBar: React.FC<CompactBarProps> = ({
 
         <div className="min-w-0 flex-1 ml-2">
           <MarqueeText
-            text={track.title || 'No Track Playing'}
+            text={track.title || 'Waiting for Spotify...'}
             className="text-[11px] font-bold text-white tracking-tight leading-tight"
           />
           <p
@@ -58,17 +68,32 @@ export const CompactBar: React.FC<CompactBarProps> = ({
       </div>
 
       {/* Right: Controls Cluster */}
-      <div className="app-no-drag flex items-center gap-1.5 shrink-0">
+      <div className="app-no-drag flex items-center gap-1 shrink-0">
+        {/* Previous Track button */}
+        {onPrevious && (
+          <button
+            onClick={onPrevious}
+            title="Previous Track"
+            className="p-1 text-zinc-300 hover:text-white active:scale-90 transition-transform"
+          >
+            <SkipBack size={12} className="fill-white stroke-none" />
+          </button>
+        )}
+
         {/* Play / Pause button */}
         <button
           onClick={onTogglePlay}
           title={track.isPlaying ? 'Pause' : 'Play'}
-          className="w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 active:scale-90 flex items-center justify-center p-0 text-white backdrop-blur-md transition-all shadow"
+          className={`w-6 h-6 rounded-full flex items-center justify-center p-0 backdrop-blur-md transition-all shadow active:scale-90 ${
+            track.isPlaying
+              ? 'bg-[#1DB954] hover:bg-[#1ed760] text-black shadow-[0_0_8px_rgba(29,185,84,0.4)]'
+              : 'bg-white/20 hover:bg-white/30 text-white'
+          }`}
         >
           {track.isPlaying ? (
-            <Pause size={11} className="fill-white stroke-none" />
+            <Pause size={10} className="fill-black stroke-none" />
           ) : (
-            <Play size={11} className="fill-white stroke-none" />
+            <Play size={10} className="fill-white stroke-none ml-0.5" />
           )}
         </button>
 
@@ -76,10 +101,21 @@ export const CompactBar: React.FC<CompactBarProps> = ({
         <button
           onClick={onNext}
           title="Next Track"
-          className="p-1 text-white hover:text-zinc-200 hover:scale-110 active:scale-90 transition-transform"
+          className="p-1 text-zinc-300 hover:text-white active:scale-90 transition-transform"
         >
-          <SkipForward size={13} className="fill-white stroke-none" />
+          <SkipForward size={12} className="fill-white stroke-none" />
         </button>
+
+        {/* Expand / Unzip button */}
+        {onToggleZip && (
+          <button
+            onClick={onToggleZip}
+            title="Unzip / Expand to Full Player"
+            className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <ChevronsUpDown size={12} className="stroke-[2.2]" />
+          </button>
+        )}
 
         {/* Pin Window Position button */}
         <button
@@ -97,6 +133,17 @@ export const CompactBar: React.FC<CompactBarProps> = ({
         >
           <Pin size={11} className="stroke-[2.2]" />
         </button>
+
+        {/* Settings button */}
+        {onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            title="Spoti-Fly Settings"
+            className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <Settings2 size={11} className="stroke-[2.2]" />
+          </button>
+        )}
       </div>
 
       {/* Bottom Glowing Progress Line */}

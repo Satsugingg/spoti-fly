@@ -91,6 +91,7 @@ const defaultSettings: SpotiflySettings = {
   alwaysOnTop: true,
   showMarquee: true,
   minimalMode: false,
+  compactMode: false,
   opacity: 100,
   startOnBoot: true,
   startMinimized: false,
@@ -272,7 +273,7 @@ function createWindow() {
   const settings = loadSettings();
   isAlwaysOnTop = true; // Always default to true so it stays visible on top of Spotify
   const appIcon = createAppIcon();
-  const initialHeight = settings.minimalMode ? 72 : 142;
+  const initialHeight = settings.compactMode ? 48 : (settings.minimalMode ? 72 : 142);
   targetHeight = initialHeight;
   currentHeight = initialHeight;
 

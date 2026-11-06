@@ -13,6 +13,7 @@ import {
   Mic2,
   Minimize2,
   Radio,
+  ChevronsDownUp,
 } from 'lucide-react';
 import { SpotiflySettings, HotkeyConfig } from '../../types/player';
 import logoUrl from '../assets/logo.png';
@@ -132,6 +133,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const isEdgeSnapping = settings.enableEdgeSnapping !== false;
   const isUpNextPreview = Boolean(settings.showUpNextPreview);
   const isKaraokeButton = settings.showKaraokeButton !== false;
+  const isCompactMode = Boolean(settings.compactMode);
   const volumeTarget = settings.volumeTarget || 'spotify';
 
   useEffect(() => {
@@ -685,6 +687,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div
                   className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
                     isKaraokeButton ? 'translate-x-3.5' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </button>
+          </div>
+
+          {/* Zip Up / Sized-Down Compact Player Mode Toggle */}
+          <div>
+            <button
+              type="button"
+              onClick={() => onUpdateSettings({ compactMode: !isCompactMode })}
+              className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start justify-between gap-3 ${
+                isCompactMode
+                  ? 'bg-emerald-500/10 border-emerald-500/40'
+                  : 'bg-zinc-800/50 border-white/5 hover:bg-zinc-800'
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <ChevronsDownUp
+                    size={14}
+                    className={isCompactMode ? 'text-emerald-400' : 'text-zinc-400'}
+                  />
+                  <span className="font-semibold text-[12px] text-white">
+                    Zip Up / Sized-Down Player
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-400 font-mono">
+                    Compact Bar
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-400 leading-tight">
+                  Collapses the Always-on-Top player into an ultra-slim 48px bar with mini cover art, marquee title, playback controls, and progress glow.
+                </p>
+              </div>
+
+              {/* Toggle Pill Switch */}
+              <div
+                className={`shrink-0 w-8 h-4.5 rounded-full p-0.5 transition-colors mt-0.5 flex items-center ${
+                  isCompactMode ? 'bg-[#1DB954]' : 'bg-zinc-700'
+                }`}
+              >
+                <div
+                  className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
+                    isCompactMode ? 'translate-x-3.5' : 'translate-x-0'
                   }`}
                 />
               </div>
