@@ -81,10 +81,14 @@ export const CompactBar: React.FC<CompactBarProps> = ({
           <SkipForward size={13} className="fill-white stroke-none" />
         </button>
 
-        {/* Pin button */}
+        {/* Pin Window Position button */}
         <button
           onClick={onTogglePin}
-          title="Window Pinned Down (Click to unpin and expand)"
+          title={
+            isPinned
+              ? 'Position Locked (Click to unlock & drag)'
+              : 'Position Unlocked (Draggable — click to lock position)'
+          }
           className={`p-1 rounded-md transition-all duration-200 ${
             isPinned
               ? 'text-emerald-400 bg-emerald-500/20 hover:bg-emerald-500/30 ring-1 ring-emerald-500/40 rotate-45'

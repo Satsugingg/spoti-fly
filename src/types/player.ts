@@ -32,6 +32,7 @@ export interface SpotiflySettings {
   opacity?: number;
   spotifyClientId?: string;
   spotifyRedirectUri?: string;
+  isPinned?: boolean;
   startOnBoot?: boolean;
   startMinimized?: boolean;
   windowX?: number;

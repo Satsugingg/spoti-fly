@@ -216,15 +216,10 @@ export const App: React.FC = () => {
         if (s) {
           setSettings(s);
           settingsRef.current = s;
+          if (typeof s.isPinned === 'boolean') {
+            setIsPinned(s.isPinned);
+          }
         }
-      });
-      window.spotifly.getAlwaysOnTop().then((pinned) => {
-        setIsPinned(pinned);
-      });
-
-      // Pin listener
-      const unsubPin = window.spotifly.onAlwaysOnTopChange((pinned) => {
-        setIsPinned(pinned);
       });
 
       // Initial track check from GSMTC
@@ -250,7 +245,6 @@ export const App: React.FC = () => {
       });
 
       return () => {
-        unsubPin();
         unsubMedia();
       };
     }
@@ -276,14 +270,14 @@ export const App: React.FC = () => {
     };
   }, [settings.mode, isSpotifyAuth]);
 
-  // Window actions
-  const handleTogglePin = useCallback(async () => {
-    let newPinned = !isPinned;
-    if (window.spotifly) {
-      newPinned = await window.spotifly.toggleAlwaysOnTop();
-    }
-    setIsPinned(newPinned);
-  }, [isPinned]);
+  // Window actions: Pin locks position to prevent accidental dragging while window ALWAYS stays on top
+  const handleTogglePin = useCallback(() => {
+    setIsPinned((prev) => {
+      const next = !prev;
+      handleUpdateSettings({ isPinned: next });
+      return next;
+    });
+  }, []);
 
   const handleMouseEnter = () => {
     isHoveredRef.current = true;

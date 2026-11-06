@@ -62,13 +62,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         )}
 
-        {/* Pin Window Down Button (Locks position & always-on-top) */}
+        {/* Pin Window Position Button (Locks position against dragging; window always stays on top) */}
         <button
           onClick={onTogglePin}
           title={
             isPinned
-              ? 'Window Pinned Down (Position locked — click to unlock & drag)'
-              : 'Window Unpinned (Draggable — click to pin down)'
+              ? 'Position Locked (Click to unlock & drag window)'
+              : 'Position Unlocked (Draggable — click to lock position)'
           }
           className={`p-1 rounded-md transition-all duration-200 ${
             isPinned
