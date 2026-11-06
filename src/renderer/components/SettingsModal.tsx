@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { SpotiflySettings, HotkeyConfig } from '../../types/player';
 import logoUrl from '../assets/logo.png';
+import packageJson from '../../../package.json';
 
 export const DEFAULT_HOTKEYS: Required<HotkeyConfig> = {
   playPause: 'CommandOrControl+Alt+Space',
@@ -757,7 +758,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-end">
+        <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between">
+          <span className="text-[10px] text-zinc-500 font-mono tracking-wider">
+            v{packageJson.version}
+          </span>
           <button
             onClick={onClose}
             className="px-4 py-1 rounded-lg bg-[#1DB954] hover:bg-[#1ed760] text-black font-semibold text-xs transition-colors shadow-md"

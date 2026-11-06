@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/Download-Spoti--Fly_Setup.exe-1DB954?style=for-the-badge&logo=windows&logoColor=white" alt="Download Spoti-Fly for Windows" />
   </a>
   <a href="https://github.com/Satsugingg/spoti-fly/releases">
-    <img src="https://img.shields.io/github/v/release/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Release" alt="Release v1.2.0" />
+    <img src="https://img.shields.io/github/v/release/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Release" alt="Release v1.2.1" />
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows_10_%26_11-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Platform: Windows 10 & 11" />
   <img src="https://img.shields.io/badge/Spotify-Vanilla_%7C_Store_%7C_Web-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Spotify: Vanilla | Store | Web" />
@@ -85,11 +85,11 @@ npm install
 # Run in development mode
 npm run dev
 
-# Package standalone Windows NSIS Installer (.exe)
+# Package standalone Windows custom Installer (.exe)
 npm run package
 ```
 
-The compiled installer will be generated in `release/Spoti-Fly Setup 1.2.0.exe`.
+The compiled installer will be generated in `release/Spoti-Fly Setup 1.2.1.exe`.
 
 ---
 

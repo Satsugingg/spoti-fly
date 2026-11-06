@@ -43,6 +43,22 @@ async function main() {
 
   console.log(`[2/3] Compiling custom installer GUI with ${cscPath}...`);
 
+  const versionConfigPath = path.join(releaseDir, 'VersionConfig.cs');
+  fs.writeFileSync(
+    versionConfigPath,
+    `namespace SpotiflyInstaller
+{
+    public static class AppInfo
+    {
+        public const string Version = "${version}";
+        public const string Title = "Spoti-Fly";
+        public const string Tagline = "Always-on-Top Spotify Mini-Player • v${version}";
+    }
+}
+`,
+    'utf-8'
+  );
+
   const refs = [
     'System.dll',
     'System.Drawing.dll',
@@ -61,10 +77,17 @@ async function main() {
     `/resource:"${payloadZip}",payload.zip`,
     fs.existsSync(logoPath) ? `/resource:"${logoPath}",logo.png` : '',
     `/out:"${outputExe}"`,
+    `"${versionConfigPath}"`,
     `"${installerSource}"`
   ].filter(Boolean).join(' ');
 
-  execSync(`"${cscPath}" ${cscArgs}`, { stdio: 'inherit' });
+  try {
+    execSync(`"${cscPath}" ${cscArgs}`, { stdio: 'inherit' });
+  } finally {
+    if (fs.existsSync(versionConfigPath)) {
+      fs.unlinkSync(versionConfigPath);
+    }
+  }
 
   // 3. Clean up payload.zip
   console.log(`[3/3] Cleaning up temporary files...`);

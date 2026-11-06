@@ -164,7 +164,7 @@ namespace SpotiflyInstaller
             headerPanel.Controls.Add(picIcon);
 
             Label lblTitle = new Label();
-            lblTitle.Text = "Spoti-Fly Setup";
+            lblTitle.Text = "Spoti-Fly Setup v" + AppInfo.Version;
             lblTitle.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             lblTitle.ForeColor = TextSecondary;
             lblTitle.AutoSize = true;
@@ -275,7 +275,7 @@ namespace SpotiflyInstaller
             welcomePanel.Controls.Add(lblAppName);
 
             Label lblTagline = new Label();
-            lblTagline.Text = "Always-on-Top Spotify Mini-Player • v1.2.0";
+            lblTagline.Text = "Always-on-Top Spotify Mini-Player • v" + AppInfo.Version;
             lblTagline.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             lblTagline.ForeColor = TextSecondary;
             lblTagline.AutoSize = true;
@@ -408,7 +408,7 @@ namespace SpotiflyInstaller
             Control[] btnInstalls = welcomePanel.Controls.Find("btnInstall", true);
             if (btnInstalls.Length > 0 && btnInstalls[0] is SpotifyButton)
             {
-                ((SpotifyButton)btnInstalls[0]).ButtonText = "Update Spoti-Fly";
+                ((SpotifyButton)btnInstalls[0]).ButtonText = "Update Spoti-Fly (v" + AppInfo.Version + ")";
             }
 
             Control[] lblDescs = welcomePanel.Controls.Find("lblPathDesc", true);
@@ -435,7 +435,7 @@ namespace SpotiflyInstaller
             installPanel.BackColor = BgDark;
 
             lblInstalling = new Label();
-            lblInstalling.Text = "Installing Spoti-Fly v1.2.0";
+            lblInstalling.Text = "Installing Spoti-Fly v" + AppInfo.Version;
             lblInstalling.Font = new Font("Segoe UI", 16f, FontStyle.Bold);
             lblInstalling.ForeColor = TextPrimary;
             lblInstalling.AutoSize = true;
@@ -495,7 +495,7 @@ namespace SpotiflyInstaller
             finishPanel.Controls.Add(lblSuccess);
 
             lblSuccessDesc = new Label();
-            lblSuccessDesc.Text = "Spoti-Fly v1.2.0 has been successfully installed and configured.";
+            lblSuccessDesc.Text = "Spoti-Fly v" + AppInfo.Version + " has been successfully installed and configured.";
             lblSuccessDesc.Font = new Font("Segoe UI", 10f);
             lblSuccessDesc.ForeColor = TextSecondary;
             lblSuccessDesc.AutoSize = true;
@@ -582,7 +582,7 @@ namespace SpotiflyInstaller
 
             if (lblInstalling != null)
             {
-                lblInstalling.Text = isUpdateMode ? "Updating Spoti-Fly to v1.2.0" : "Installing Spoti-Fly v1.2.0";
+                lblInstalling.Text = isUpdateMode ? "Updating Spoti-Fly to v" + AppInfo.Version : "Installing Spoti-Fly v" + AppInfo.Version;
             }
             if (lblSuccess != null)
             {
@@ -590,7 +590,7 @@ namespace SpotiflyInstaller
             }
             if (lblSuccessDesc != null)
             {
-                lblSuccessDesc.Text = isUpdateMode ? "Spoti-Fly has been successfully updated to v1.2.0." : "Spoti-Fly v1.2.0 has been successfully installed and configured.";
+                lblSuccessDesc.Text = isUpdateMode ? "Spoti-Fly has been successfully updated to v" + AppInfo.Version + "." : "Spoti-Fly v" + AppInfo.Version + " has been successfully installed and configured.";
             }
 
             ShowPanel(installPanel);
