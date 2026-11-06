@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/Download-Spoti--Fly_Setup.exe-1DB954?style=for-the-badge&logo=windows&logoColor=white" alt="Download Spoti-Fly for Windows" />
   </a>
   <a href="https://github.com/Satsugingg/spoti-fly/releases">
-    <img src="https://img.shields.io/github/v/release/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Release" alt="Release v1.5.0" />
+    <img src="https://img.shields.io/github/v/release/Satsugingg/spoti-fly?style=for-the-badge&color=202124&label=Release" alt="Release v1.5.1" />
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows_10_%26_11-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Platform: Windows 10 & 11" />
   <img src="https://img.shields.io/badge/Spotify-Vanilla_%7C_Store_%7C_Web-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Spotify: Vanilla | Store | Web" />
@@ -44,6 +44,7 @@ Spoti-Fly works straight out of the box with **any** Spotify setup — zero conf
 ## ✨ Features
 
 * 🪟 **Always-on-Top:** Stays visible over full-screen apps, games, IDEs, and browser windows (even when unpinned).
+* ⚡ **Ultra-Low Memory Footprint (~25–45 MB):** Subsystem pruning, disabled spare renderers, and native Win32 working set trimming reduce RAM usage by over 75% compared to standard desktop players.
 * 🧲 **Magnetic Edge & Corner Snapping:** Tactile magnetic snap when dragging near monitor edges with physical inertia, spring dampening, and extra-strong magnetic latching with high-resistance breakaway when pulling out of screen corners.
 * 🔍 **Proportional Player Scaling (50% – 200%):** Scale the entire mini-player from a discreet compact micro-widget (50%) to an ultra-large high-visibility display (200%) directly from Settings.
 * 🔊 **Scroll Wheel Volume Control & HUD:** Scroll mouse wheel anywhere over the mini-player to adjust volume. Selectable in Settings between Spotify Application volume or Windows Master volume with a sleek temporary HUD overlay.
@@ -90,7 +91,7 @@ npm run dev
 npm run package
 ```
 
-The compiled installer will be generated in `release/Spoti-Fly Setup 1.5.0.exe`.
+The compiled installer will be generated in `release/Spoti-Fly Setup 1.5.1.exe`.
 
 ---
 

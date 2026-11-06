@@ -58,8 +58,16 @@ $lastRepeat = ""
 $lastTick = [Environment]::TickCount
 
 Write-Output '{"type":"ready"}'
+[System.GC]::Collect()
+
+$loopCount = 0
 
 while ($true) {
+    $loopCount++
+    if ($loopCount -ge 75) {
+        $loopCount = 0
+        [System.GC]::Collect()
+    }
     try {
         $session = Get-ActiveSession
         if ($null -ne $session) {

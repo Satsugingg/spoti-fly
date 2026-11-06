@@ -78,6 +78,30 @@ public class SpotiflyVol {
         }
     }
 
+    [DllImport("psapi.dll")]
+    static extern int EmptyWorkingSet(IntPtr hwProc);
+
+    static void TrimProcess(int pid) {
+        try {
+            using (var proc = System.Diagnostics.Process.GetProcessById(pid)) {
+                EmptyWorkingSet(proc.Handle);
+            }
+        } catch {}
+    }
+
+    static void TrimAllSpotifly() {
+        string[] targetNames = new string[] { "Spoti-Fly", "electron" };
+        foreach (string name in targetNames) {
+            try {
+                foreach (var proc in System.Diagnostics.Process.GetProcessesByName(name)) {
+                    try {
+                        EmptyWorkingSet(proc.Handle);
+                    } catch {}
+                }
+            } catch {}
+        }
+    }
+
     public static void Main(string[] args) {
         try {
             if (args.Length == 0 || args[0].ToLowerInvariant() == "get-master") {
@@ -93,6 +117,15 @@ public class SpotiflyVol {
                 float delta = float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) / 100f;
                 float current = GetMasterVolume();
                 Console.WriteLine(Math.Round(SetMasterVolume(current + delta) * 100));
+            } else if (cmd == "trim" && args.Length > 1) {
+                int pid = int.Parse(args[1]);
+                TrimProcess(pid);
+                Console.WriteLine("0");
+                return;
+            } else if (cmd == "trim-all") {
+                TrimAllSpotifly();
+                Console.WriteLine("0");
+                return;
             }
         } catch (Exception ex) {
             Console.Error.WriteLine(ex.Message);

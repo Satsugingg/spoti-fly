@@ -181,6 +181,10 @@ export class GsmtcBridge {
         const data = await res.json() as any;
         if (data.results && data.results.length > 0 && data.results[0].artworkUrl100) {
           const highRes = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+          if (this.artCache.size >= 50) {
+            const oldest = this.artCache.keys().next().value;
+            if (oldest) this.artCache.delete(oldest);
+          }
           this.artCache.set(key, highRes);
           return highRes;
         }
