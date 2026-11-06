@@ -786,8 +786,10 @@ namespace SpotiflyInstaller
 
         private static void CloseRunningSpotiFlyInstances(string targetDir)
         {
-            // A. Kill via taskkill /F /T by image name (terminates entire process trees including GPU/renderer/audio helpers)
-            string[] imageNames = new string[] { "Spoti-Fly.exe", "spoti-fly.exe", "spotifly_vol.exe", "media_keys.exe" };
+            int currentPid = Process.GetCurrentProcess().Id;
+
+            // A. Kill via taskkill /F /T specifically for the main player executable and helpers
+            string[] imageNames = new string[] { "Spoti-Fly.exe", "spotifly_vol.exe", "media_keys.exe" };
             foreach (string img in imageNames)
             {
                 try
@@ -805,7 +807,7 @@ namespace SpotiflyInstaller
                 catch { }
             }
 
-            // B. Check running .NET Process objects for any lingering process named spoti-fly or running from targetDir
+            // B. Check running .NET Process objects for any lingering player process, EXCLUDING this installer
             try
             {
                 Process[] allProcs = Process.GetProcesses();
@@ -813,8 +815,18 @@ namespace SpotiflyInstaller
                 {
                     try
                     {
+                        // NEVER kill the installer itself!
+                        if (p.Id == currentPid) continue;
+
                         string pName = p.ProcessName.ToLowerInvariant();
-                        bool match = pName.Contains("spoti-fly") || pName.Contains("spotifly");
+                        // Never kill setup or installer tools
+                        if (pName.Contains("setup") || pName.Contains("installer")) continue;
+
+                        // Target exact Spoti-Fly player processes or helpers
+                        bool match = string.Equals(pName, "spoti-fly", StringComparison.OrdinalIgnoreCase)
+                                  || string.Equals(pName, "spotifly", StringComparison.OrdinalIgnoreCase)
+                                  || string.Equals(pName, "spotifly_vol", StringComparison.OrdinalIgnoreCase)
+                                  || string.Equals(pName, "media_keys", StringComparison.OrdinalIgnoreCase);
 
                         if (!match && !string.IsNullOrEmpty(targetDir) && Directory.Exists(targetDir))
                         {
@@ -902,20 +914,23 @@ namespace SpotiflyInstaller
                         throw new IOException("Failed to write to '" + destPath + "' after " + maxRetries + " attempts: " + ex.Message, ex);
                     }
 
-                    // If file is locked, trigger another taskkill for the executable in case a process was restarted or lingered
+                    // If file is locked, trigger another taskkill for the player executable in case a process lingered
                     if (destPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                     {
                         try
                         {
                             string fileName = Path.GetFileName(destPath);
-                            ProcessStartInfo psi = new ProcessStartInfo("taskkill", "/F /IM \"" + fileName + "\" /T")
+                            if (!fileName.ToLowerInvariant().Contains("setup") && !fileName.ToLowerInvariant().Contains("installer"))
                             {
-                                CreateNoWindow = true,
-                                UseShellExecute = false
-                            };
-                            using (Process p = Process.Start(psi))
-                            {
-                                if (p != null) p.WaitForExit(1000);
+                                ProcessStartInfo psi = new ProcessStartInfo("taskkill", "/F /IM \"" + fileName + "\" /T")
+                                {
+                                    CreateNoWindow = true,
+                                    UseShellExecute = false
+                                };
+                                using (Process p = Process.Start(psi))
+                                {
+                                    if (p != null) p.WaitForExit(1000);
+                                }
                             }
                         }
                         catch { }
