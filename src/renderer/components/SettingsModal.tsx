@@ -202,6 +202,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   if (!isOpen) return null;
 
   const isMinimal = Boolean(settings.minimalMode);
+  const isAutoCollapse = settings.autoCollapse !== false;
   const currentOpacity = typeof settings.opacity === 'number' ? settings.opacity : 100;
   const currentScale = typeof settings.playerScale === 'number' ? settings.playerScale : 100;
 
@@ -782,6 +783,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div
                   className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
                     isMinimal ? 'translate-x-3.5' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </button>
+          </div>
+
+          {/* Auto-Collapse when Idle Toggle */}
+          <div>
+            <button
+              type="button"
+              onClick={() => onUpdateSettings({ autoCollapse: !isAutoCollapse })}
+              className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start justify-between gap-3 ${
+                isAutoCollapse
+                  ? 'bg-emerald-500/10 border-emerald-500/40'
+                  : 'bg-zinc-800/50 border-white/5 hover:bg-zinc-800'
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Minimize2
+                    size={14}
+                    className={isAutoCollapse ? 'text-emerald-400' : 'text-zinc-400'}
+                  />
+                  <span className="font-semibold text-[12px] text-white">
+                    Auto-Collapse when Idle
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-400 leading-tight">
+                  Smoothly contract into a sleek micro-pill when inactive. Hover or move cursor to expand.
+                </p>
+              </div>
+
+              {/* Toggle Pill Switch */}
+              <div
+                className={`shrink-0 w-8 h-4.5 rounded-full p-0.5 transition-colors mt-0.5 flex items-center ${
+                  isAutoCollapse ? 'bg-[#1DB954]' : 'bg-zinc-700'
+                }`}
+              >
+                <div
+                  className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
+                    isAutoCollapse ? 'translate-x-3.5' : 'translate-x-0'
                   }`}
                 />
               </div>

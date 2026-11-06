@@ -8,12 +8,12 @@ $asTaskGeneric = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Ob
     $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1' 
 }[0]
 
-function Await($WinRtTask, $ResultType) {
+function Await($WinRtTask, $ResultType, [int]$TimeoutMs = 2000) {
     if ($null -eq $WinRtTask) { return $null }
     try {
         $asTask = $asTaskGeneric.MakeGenericMethod($ResultType)
         $netTask = $asTask.Invoke($null, @($WinRtTask))
-        $netTask.Wait(2000) | Out-Null
+        $netTask.Wait($TimeoutMs) | Out-Null
         return $netTask.Result
     } catch {
         return $null
@@ -22,24 +22,30 @@ function Await($WinRtTask, $ResultType) {
 
 [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType = WindowsRuntime] | Out-Null
 $op = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()
-$manager = Await $op ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])
+$manager = Await $op ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]) 4000
 if (-not $manager) { exit 1 }
 
 $session = $null
 $sessions = $manager.GetSessions()
 if ($null -ne $sessions) {
     foreach ($s in $sessions) {
-        if ($null -ne $s.SourceAppUserModelId -and $s.SourceAppUserModelId.ToLower().Contains("spotify")) {
-            $session = $s
-            break
+        if ($null -ne $s.SourceAppUserModelId) {
+            $id = $s.SourceAppUserModelId.ToLower()
+            if ($id.Contains("spotify") -or $id -eq "spotify.exe") {
+                $session = $s
+                break
+            }
         }
     }
 }
 
 if (-not $session) {
     $cur = $manager.GetCurrentSession()
-    if ($null -ne $cur -and $null -ne $cur.SourceAppUserModelId -and $cur.SourceAppUserModelId.ToLower().Contains("spotify")) {
-        $session = $cur
+    if ($null -ne $cur -and $null -ne $cur.SourceAppUserModelId) {
+        $id = $cur.SourceAppUserModelId.ToLower()
+        if ($id.Contains("spotify") -or $id -eq "spotify.exe") {
+            $session = $cur
+        }
     }
 }
 

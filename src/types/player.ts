@@ -29,6 +29,7 @@ export interface SpotiflySettings {
   alwaysOnTop: boolean;
   showMarquee: boolean;
   minimalMode?: boolean;
+  autoCollapse?: boolean;
   playerScale?: number;
   opacity?: number;
   spotifyClientId?: string;

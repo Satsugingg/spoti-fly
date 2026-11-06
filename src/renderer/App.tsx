@@ -57,6 +57,7 @@ export const App: React.FC = () => {
     alwaysOnTop: true,
     showMarquee: true,
     minimalMode: false,
+    autoCollapse: true,
     playerScale: 100,
     startOnBoot: true,
     startMinimized: false,
@@ -100,22 +101,23 @@ export const App: React.FC = () => {
   }, [getFullHeight]);
 
   const scheduleShrink = useCallback(() => {
+    if (settingsRef.current.autoCollapse === false) return;
     if (idleTimerRef.current) {
       clearTimeout(idleTimerRef.current);
     }
     idleTimerRef.current = setTimeout(() => {
       if (
-        !isHoveredRef.current &&
         !isSettingsOpenRef.current &&
         !isDraggingRef.current &&
-        !isLyricsOpenRef.current
+        !isLyricsOpenRef.current &&
+        settingsRef.current.autoCollapse !== false
       ) {
         setIsShrunk(true);
         if (window.spotifly) {
           window.spotifly.animateWindowHeight(getShrunkHeight());
         }
       }
-    }, 2000);
+    }, 2500);
   }, [getShrunkHeight]);
 
   const showVolumeHud = useCallback((percent: number, target: 'spotify' | 'system') => {
@@ -218,14 +220,14 @@ export const App: React.FC = () => {
 
       // Initial track check from GSMTC
       window.spotifly.getCurrentTrack().then((current) => {
-        if (current && current.hasMedia) {
+        if (current && (current.hasMedia || (current.title && current.title !== 'Not Playing'))) {
           setTrack(current);
         }
       });
 
       // Real-time Media listener
       const unsubMedia = window.spotifly.onMediaUpdate((mediaTrack) => {
-        if (settingsRef.current.mode === 'gsmtc' && mediaTrack && mediaTrack.hasMedia) {
+        if (settingsRef.current.mode === 'gsmtc' && mediaTrack) {
           setTrack(mediaTrack);
         }
       });
@@ -275,17 +277,20 @@ export const App: React.FC = () => {
 
   const handleMouseEnter = () => {
     isHoveredRef.current = true;
-    expandWindow();
+    if (isDraggingRef.current) return;
+    if (isShrunk) {
+      expandWindow();
+    }
+    scheduleShrink();
   };
 
   const handleMouseMove = () => {
     isHoveredRef.current = true;
+    if (isDraggingRef.current) return;
     if (isShrunk) {
       expandWindow();
-    } else if (idleTimerRef.current) {
-      clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = null;
     }
+    scheduleShrink();
   };
 
   const handleMouseLeave = () => {
@@ -433,6 +438,13 @@ export const App: React.FC = () => {
     if (newSettings.showKaraokeButton === false && isLyricsOpenRef.current) {
       handleToggleLyrics();
     }
+    if (typeof newSettings.autoCollapse === 'boolean') {
+      if (!newSettings.autoCollapse) {
+        expandWindow();
+      } else {
+        scheduleShrink();
+      }
+    }
     if (
       !isSettingsOpenRef.current &&
       !isLyricsOpenRef.current &&
@@ -558,24 +570,35 @@ export const App: React.FC = () => {
     window.spotifly?.startInertialDrag(e.clientX, e.clientY);
   };
 
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {}
-    isDraggingRef.current = false;
-    window.spotifly?.stopInertialDrag();
-
-    const isInside =
-      e.clientX >= 0 &&
-      e.clientX <= window.innerWidth &&
-      e.clientY >= 0 &&
-      e.clientY <= window.innerHeight;
-    isHoveredRef.current = isInside;
-
-    if (!isInside && !isSettingsOpenRef.current) {
-      scheduleShrink();
+  const handlePointerUp = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {
+    if (e) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {}
     }
-  };
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      window.spotifly?.stopInertialDrag();
+    }
+    scheduleShrink();
+  }, [scheduleShrink]);
+
+  // Global window pointerup/cancel to ensure dragging is cleanly finalized anywhere
+  useEffect(() => {
+    const handleGlobalPointerUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        window.spotifly?.stopInertialDrag();
+        scheduleShrink();
+      }
+    };
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    window.addEventListener('pointercancel', handleGlobalPointerUp);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalPointerUp);
+      window.removeEventListener('pointercancel', handleGlobalPointerUp);
+    };
+  }, [scheduleShrink]);
 
   return (
     <div className="w-screen h-screen p-0 m-0 overflow-hidden flex items-center justify-center bg-transparent">

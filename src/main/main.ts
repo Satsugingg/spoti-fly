@@ -107,6 +107,7 @@ const defaultSettings: SpotiflySettings = {
   alwaysOnTop: true,
   showMarquee: true,
   minimalMode: false,
+  autoCollapse: true,
   playerScale: 100,
   opacity: 100,
   startOnBoot: true,

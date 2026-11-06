@@ -79,6 +79,7 @@ export class GsmtcBridge {
     try {
       this.process = spawn('powershell.exe', [
         '-NoProfile',
+        '-STA',
         '-ExecutionPolicy',
         'Bypass',
         '-File',
@@ -196,14 +197,24 @@ export class GsmtcBridge {
     return null;
   }
 
-  private runGsmtcCmd(action: string, value: string) {
+  private runMediaKeyFallback(action: string) {
+    try {
+      const mediaExe = this.getScriptPath('media_keys.exe');
+      if (fs.existsSync(mediaExe)) {
+        const cmd = action === 'toggle' ? 'playpause' : action;
+        execFile(mediaExe, [cmd], () => {});
+      }
+    } catch {}
+  }
+
+  private runGsmtcCmd(action: string, value: string = '') {
     const scriptPath = this.getScriptPath('gsmtc-cmd.ps1');
     execFile(
       'powershell.exe',
-      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, '-Action', action, '-Value', value],
-      (err, _stdout, stderr) => {
+      ['-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, '-Action', action, '-Value', value],
+      (err) => {
         if (err) {
-          console.error(`[gsmtc-cmd ${action} error]:`, err, stderr);
+          this.runMediaKeyFallback(action);
         }
       }
     );
