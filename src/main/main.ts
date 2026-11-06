@@ -98,7 +98,7 @@ const defaultSettings: SpotiflySettings = {
   globalHotkeysEnabled: true,
   hotkeys: { ...DEFAULT_HOTKEYS },
   enableEdgeSnapping: true,
-  showUpNextPreview: true,
+  showUpNextPreview: false,
   showLyrics: false,
   showKaraokeButton: true,
 };

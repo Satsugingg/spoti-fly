@@ -59,7 +59,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   onSeek,
   onToggleShuffle,
   onToggleRepeat,
-  showUpNextPreview = true,
+  showUpNextPreview = false,
   onFetchUpNext,
   isLyricsOpen = false,
   onToggleLyrics,

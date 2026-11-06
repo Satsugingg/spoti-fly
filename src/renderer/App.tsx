@@ -63,7 +63,7 @@ export const App: React.FC = () => {
     globalHotkeysEnabled: true,
     hotkeys: { ...DEFAULT_HOTKEYS },
     enableEdgeSnapping: true,
-    showUpNextPreview: true,
+    showUpNextPreview: false,
     showLyrics: false,
     showKaraokeButton: true,
   });
@@ -642,7 +642,7 @@ export const App: React.FC = () => {
               onSeek={handleSeek}
               onToggleShuffle={handleToggleShuffle}
               onToggleRepeat={handleToggleRepeat}
-              showUpNextPreview={settings.showUpNextPreview !== false}
+              showUpNextPreview={Boolean(settings.showUpNextPreview)}
               onFetchUpNext={handleFetchUpNext}
               isLyricsOpen={isLyricsOpen}
               onToggleLyrics={settings.showKaraokeButton !== false ? handleToggleLyrics : undefined}

@@ -130,7 +130,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const isStartMinimized = Boolean(settings.startMinimized);
   const isGlobalHotkeys = settings.globalHotkeysEnabled !== false;
   const isEdgeSnapping = settings.enableEdgeSnapping !== false;
-  const isUpNextPreview = settings.showUpNextPreview !== false;
+  const isUpNextPreview = Boolean(settings.showUpNextPreview);
   const isKaraokeButton = settings.showKaraokeButton !== false;
   const volumeTarget = settings.volumeTarget || 'spotify';
 
