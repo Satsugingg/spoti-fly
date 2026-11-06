@@ -12,9 +12,18 @@ namespace SpotiflyInstaller
 {
     public class Program
     {
+        [DllImport("shell32.dll", SetLastError = true)]
+        private static extern int SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string AppID);
+
         [STAThread]
         public static void Main()
         {
+            try
+            {
+                SetCurrentProcessExplicitAppUserModelID("Spotifly.Installer");
+            }
+            catch { }
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new InstallerForm());
@@ -87,6 +96,7 @@ namespace SpotiflyInstaller
             {
                 CreateParams cp = base.CreateParams;
                 cp.ClassStyle |= 0x00020000; // CS_DROPSHADOW
+                cp.Style |= 0x00020000;      // WS_MINIMIZEBOX (enables taskbar thumbnail & minimize/restore)
                 return cp;
             }
         }
@@ -99,8 +109,33 @@ namespace SpotiflyInstaller
             this.BackColor = BgDark;
             this.ForeColor = TextPrimary;
             this.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
+            this.Text = "Spoti-Fly Setup v" + AppInfo.Version;
+            this.ShowIcon = true;
+            this.ShowInTaskbar = true;
 
-            // Load embedded logo or icon
+            // Load embedded icon and logo
+            try
+            {
+                Assembly asm = Assembly.GetExecutingAssembly();
+                using (Stream iconStream = asm.GetManifestResourceStream("icon.ico"))
+                {
+                    if (iconStream != null)
+                    {
+                        this.Icon = new Icon(iconStream);
+                    }
+                }
+            }
+            catch { }
+
+            if (this.Icon == null)
+            {
+                try
+                {
+                    this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+                }
+                catch { }
+            }
+
             try
             {
                 Assembly asm = Assembly.GetExecutingAssembly();
@@ -384,6 +419,14 @@ namespace SpotiflyInstaller
             chkLaunchApp.Size = new Size(250, 24);
             cardPanel.Controls.Add(chkLaunchApp);
 
+            Label lblCloseNotice = new Label();
+            lblCloseNotice.Text = "ℹ Running Spoti-Fly instances will be closed automatically.";
+            lblCloseNotice.Font = new Font("Segoe UI", 8.2f);
+            lblCloseNotice.ForeColor = TextMuted;
+            lblCloseNotice.AutoSize = true;
+            lblCloseNotice.Location = new Point(22, 180);
+            cardPanel.Controls.Add(lblCloseNotice);
+
             // Bottom Action Area
             SpotifyButton btnInstall = new SpotifyButton("Install Spoti-Fly", true);
             btnInstall.Name = "btnInstall";
@@ -600,16 +643,9 @@ namespace SpotiflyInstaller
 
             worker.DoWork += (s, e) =>
             {
-                // 1. Terminate any existing Spoti-Fly instances to avoid file-in-use locks
-                try
-                {
-                    Process[] procs = Process.GetProcessesByName("Spoti-Fly");
-                    foreach (Process p in procs)
-                    {
-                        try { p.Kill(); p.WaitForExit(2000); } catch { }
-                    }
-                }
-                catch { }
+                // 1. Thoroughly terminate running Spoti-Fly instances and child processes
+                worker.ReportProgress(0, "Closing running Spoti-Fly instances...");
+                CloseRunningSpotiFlyInstances(targetDirectory);
 
                 // 2. Ensure target folder exists
                 if (!Directory.Exists(targetDirectory))
@@ -649,8 +685,8 @@ namespace SpotiflyInstaller
                                 string parent = Path.GetDirectoryName(destPath);
                                 if (!Directory.Exists(parent)) Directory.CreateDirectory(parent);
 
-                                // Extract and overwrite
-                                entry.ExtractToFile(destPath, true);
+                                // Extract with retry and process kill on lock
+                                ExtractEntryWithRetry(entry, destPath);
                             }
                         }
                     }
@@ -746,6 +782,148 @@ namespace SpotiflyInstaller
                 shortcut.Save();
             }
             catch { }
+        }
+
+        private static void CloseRunningSpotiFlyInstances(string targetDir)
+        {
+            // A. Kill via taskkill /F /T by image name (terminates entire process trees including GPU/renderer/audio helpers)
+            string[] imageNames = new string[] { "Spoti-Fly.exe", "spoti-fly.exe", "spotifly_vol.exe", "media_keys.exe" };
+            foreach (string img in imageNames)
+            {
+                try
+                {
+                    ProcessStartInfo psi = new ProcessStartInfo("taskkill", "/F /IM \"" + img + "\" /T")
+                    {
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    using (Process p = Process.Start(psi))
+                    {
+                        if (p != null) p.WaitForExit(2000);
+                    }
+                }
+                catch { }
+            }
+
+            // B. Check running .NET Process objects for any lingering process named spoti-fly or running from targetDir
+            try
+            {
+                Process[] allProcs = Process.GetProcesses();
+                foreach (Process p in allProcs)
+                {
+                    try
+                    {
+                        string pName = p.ProcessName.ToLowerInvariant();
+                        bool match = pName.Contains("spoti-fly") || pName.Contains("spotifly");
+
+                        if (!match && !string.IsNullOrEmpty(targetDir) && Directory.Exists(targetDir))
+                        {
+                            try
+                            {
+                                string moduleFile = p.MainModule != null ? p.MainModule.FileName : null;
+                                if (!string.IsNullOrEmpty(moduleFile) && moduleFile.StartsWith(targetDir, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    match = true;
+                                }
+                            }
+                            catch { }
+                        }
+
+                        if (match)
+                        {
+                            p.Kill();
+                            p.WaitForExit(1000);
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+
+            // C. Wait and poll file locks on target executables (e.g. Spoti-Fly.exe)
+            string[] checkFiles = new string[] { "Spoti-Fly.exe", @"resources\app.asar.unpacked\dist\main\spotifly_vol.exe", @"resources\app.asar.unpacked\dist\main\media_keys.exe" };
+            foreach (string rel in checkFiles)
+            {
+                string fullPath = Path.Combine(targetDir, rel);
+                if (File.Exists(fullPath))
+                {
+                    int maxWait = 6000;
+                    int elapsed = 0;
+                    while (elapsed < maxWait)
+                    {
+                        if (!IsFileLocked(fullPath)) break;
+                        System.Threading.Thread.Sleep(250);
+                        elapsed += 250;
+                    }
+                }
+            }
+
+            // Brief pause for Windows file system buffers
+            System.Threading.Thread.Sleep(300);
+        }
+
+        private static bool IsFileLocked(string filePath)
+        {
+            if (!File.Exists(filePath)) return false;
+            FileStream stream = null;
+            try
+            {
+                stream = File.Open(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                return false;
+            }
+            catch (IOException)
+            {
+                return true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return true;
+            }
+            finally
+            {
+                if (stream != null) stream.Dispose();
+            }
+        }
+
+        private static void ExtractEntryWithRetry(ZipArchiveEntry entry, string destPath)
+        {
+            int maxRetries = 10;
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
+                {
+                    entry.ExtractToFile(destPath, true);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    if (attempt == maxRetries)
+                    {
+                        throw new IOException("Failed to write to '" + destPath + "' after " + maxRetries + " attempts: " + ex.Message, ex);
+                    }
+
+                    // If file is locked, trigger another taskkill for the executable in case a process was restarted or lingered
+                    if (destPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            string fileName = Path.GetFileName(destPath);
+                            ProcessStartInfo psi = new ProcessStartInfo("taskkill", "/F /IM \"" + fileName + "\" /T")
+                            {
+                                CreateNoWindow = true,
+                                UseShellExecute = false
+                            };
+                            using (Process p = Process.Start(psi))
+                            {
+                                if (p != null) p.WaitForExit(1000);
+                            }
+                        }
+                        catch { }
+                    }
+
+                    System.Threading.Thread.Sleep(350);
+                }
+            }
         }
 
         public static GraphicsPath GetRoundedRect(Rectangle bounds, int radius)

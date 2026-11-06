@@ -74,6 +74,7 @@ async function main() {
     '/target:winexe',
     `/r:${refs}`,
     fs.existsSync(iconPath) ? `/win32icon:"${iconPath}"` : '',
+    fs.existsSync(iconPath) ? `/resource:"${iconPath}",icon.ico` : '',
     `/resource:"${payloadZip}",payload.zip`,
     fs.existsSync(logoPath) ? `/resource:"${logoPath}",logo.png` : '',
     `/out:"${outputExe}"`,
