@@ -43,6 +43,21 @@ async function main() {
 
   console.log(`[2/3] Compiling custom installer GUI with ${cscPath}...`);
 
+  // If destination exe exists and is in-use, rename it out of the way so csc can write cleanly
+  if (fs.existsSync(outputExe)) {
+    try {
+      fs.unlinkSync(outputExe);
+    } catch (e) {
+      try {
+        const oldName = outputExe + '.old.' + Date.now();
+        fs.renameSync(outputExe, oldName);
+        console.log(`Notice: Existing installer was open; renamed to ${path.basename(oldName)} to allow writing new installer.`);
+      } catch (renameErr) {
+        console.warn(`Warning: Could not rename existing exe: ${renameErr.message}`);
+      }
+    }
+  }
+
   const versionConfigPath = path.join(releaseDir, 'VersionConfig.cs');
   fs.writeFileSync(
     versionConfigPath,

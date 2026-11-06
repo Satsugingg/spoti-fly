@@ -103,8 +103,8 @@ namespace SpotiflyInstaller
 
         private void InitializeComponent()
         {
-            this.Size = new Size(580, 440);
             this.FormBorderStyle = FormBorderStyle.None;
+            this.ClientSize = new Size(580, 450);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = BgDark;
             this.ForeColor = TextPrimary;
@@ -149,13 +149,6 @@ namespace SpotiflyInstaller
             }
             catch { }
 
-            // Rounded window corners
-            try
-            {
-                this.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 16, 16));
-            }
-            catch { }
-
             BuildHeader();
 
             contentPanel = new Panel();
@@ -163,11 +156,56 @@ namespace SpotiflyInstaller
             contentPanel.BackColor = BgDark;
             this.Controls.Add(contentPanel);
 
+            // Send header to back so that Windows Forms docks headerPanel to Top FIRST,
+            // placing contentPanel cleanly below headerPanel rather than overlapping it
+            headerPanel.SendToBack();
+
             BuildWelcomePanel();
             BuildInstallProgressPanel();
             BuildFinishPanel();
 
             ShowPanel(welcomePanel);
+        }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            ApplyWindowCorners();
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (this.Region != null && !(Environment.OSVersion.Version.Major >= 10 && Environment.OSVersion.Version.Build >= 22000))
+            {
+                try
+                {
+                    this.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, Width + 1, Height + 1, 16, 16));
+                }
+                catch { }
+            }
+        }
+
+        private void ApplyWindowCorners()
+        {
+            try
+            {
+                if (Environment.OSVersion.Version.Major >= 10 && Environment.OSVersion.Version.Build >= 22000)
+                {
+                    int preference = 2; // DWMWCP_ROUND
+                    if (DwmSetWindowAttribute(this.Handle, 33, ref preference, sizeof(int)) == 0)
+                    {
+                        return;
+                    }
+                }
+            }
+            catch { }
+
+            try
+            {
+                this.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, Width + 1, Height + 1, 16, 16));
+            }
+            catch { }
         }
 
         private void BuildHeader()
@@ -214,7 +252,8 @@ namespace SpotiflyInstaller
             Button btnMin = new Button();
             btnMin.Text = "–";
             btnMin.Size = new Size(40, 44);
-            btnMin.Location = new Point(Width - 80, 0);
+            btnMin.Location = new Point(ClientSize.Width - 80, 0);
+            btnMin.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnMin.FlatStyle = FlatStyle.Flat;
             btnMin.FlatAppearance.BorderSize = 0;
             btnMin.ForeColor = TextSecondary;
@@ -229,7 +268,8 @@ namespace SpotiflyInstaller
             Button btnClose = new Button();
             btnClose.Text = "✕";
             btnClose.Size = new Size(40, 44);
-            btnClose.Location = new Point(Width - 40, 0);
+            btnClose.Location = new Point(ClientSize.Width - 40, 0);
+            btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnClose.FlatStyle = FlatStyle.Flat;
             btnClose.FlatAppearance.BorderSize = 0;
             btnClose.ForeColor = TextSecondary;
@@ -295,18 +335,18 @@ namespace SpotiflyInstaller
 
             // Brand Header Area
             PictureBox picBigLogo = new PictureBox();
-            picBigLogo.Size = new Size(54, 54);
-            picBigLogo.Location = new Point(28, 20);
+            picBigLogo.Size = new Size(52, 52);
+            picBigLogo.Location = new Point(28, 16);
             picBigLogo.SizeMode = PictureBoxSizeMode.Zoom;
             if (logoImage != null) picBigLogo.Image = logoImage;
             welcomePanel.Controls.Add(picBigLogo);
 
             Label lblAppName = new Label();
             lblAppName.Text = "Spoti-Fly";
-            lblAppName.Font = new Font("Segoe UI", 19f, FontStyle.Bold);
+            lblAppName.Font = new Font("Segoe UI", 20f, FontStyle.Bold);
             lblAppName.ForeColor = TextPrimary;
             lblAppName.AutoSize = true;
-            lblAppName.Location = new Point(90, 16);
+            lblAppName.Location = new Point(88, 14);
             welcomePanel.Controls.Add(lblAppName);
 
             Label lblTagline = new Label();
@@ -314,13 +354,13 @@ namespace SpotiflyInstaller
             lblTagline.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
             lblTagline.ForeColor = TextSecondary;
             lblTagline.AutoSize = true;
-            lblTagline.Location = new Point(93, 50);
+            lblTagline.Location = new Point(90, 48);
             welcomePanel.Controls.Add(lblTagline);
 
             // Card Panel for Settings / Location
             Panel cardPanel = new Panel();
             cardPanel.Size = new Size(524, 215);
-            cardPanel.Location = new Point(28, 86);
+            cardPanel.Location = new Point(28, 82);
             cardPanel.BackColor = CardBg;
             cardPanel.Paint += (s, e) =>
             {
@@ -430,14 +470,14 @@ namespace SpotiflyInstaller
             // Bottom Action Area
             SpotifyButton btnInstall = new SpotifyButton("Install Spoti-Fly", true);
             btnInstall.Name = "btnInstall";
-            btnInstall.Size = new Size(180, 42);
-            btnInstall.Location = new Point(Width - 28 - 180, 320);
+            btnInstall.Size = new Size(190, 42);
+            btnInstall.Location = new Point(ClientSize.Width - 28 - 190, 318);
             btnInstall.Click += (s, e) => StartInstallation();
             welcomePanel.Controls.Add(btnInstall);
 
             SpotifyButton btnCancel = new SpotifyButton("Cancel", false);
             btnCancel.Size = new Size(90, 42);
-            btnCancel.Location = new Point(Width - 28 - 180 - 100, 320);
+            btnCancel.Location = new Point(ClientSize.Width - 28 - 190 - 100, 318);
             btnCancel.Click += (s, e) => this.Close();
             welcomePanel.Controls.Add(btnCancel);
 
@@ -479,10 +519,10 @@ namespace SpotiflyInstaller
 
             lblInstalling = new Label();
             lblInstalling.Text = "Installing Spoti-Fly v" + AppInfo.Version;
-            lblInstalling.Font = new Font("Segoe UI", 16f, FontStyle.Bold);
+            lblInstalling.Font = new Font("Segoe UI", 18f, FontStyle.Bold);
             lblInstalling.ForeColor = TextPrimary;
             lblInstalling.AutoSize = true;
-            lblInstalling.Location = new Point(28, 40);
+            lblInstalling.Location = new Point(28, 28);
             installPanel.Controls.Add(lblInstalling);
 
             lblStatus = new Label();
@@ -490,20 +530,22 @@ namespace SpotiflyInstaller
             lblStatus.Font = new Font("Segoe UI", 9.5f);
             lblStatus.ForeColor = TextSecondary;
             lblStatus.AutoSize = true;
-            lblStatus.Location = new Point(28, 80);
+            lblStatus.Location = new Point(28, 70);
             installPanel.Controls.Add(lblStatus);
 
             lblPercent = new Label();
             lblPercent.Text = "0%";
             lblPercent.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             lblPercent.ForeColor = SpotifyGreen;
-            lblPercent.AutoSize = true;
-            lblPercent.Location = new Point(520, 80);
+            lblPercent.AutoSize = false;
+            lblPercent.Size = new Size(60, 20);
+            lblPercent.TextAlign = ContentAlignment.MiddleRight;
+            lblPercent.Location = new Point(28 + 524 - 60, 70);
             installPanel.Controls.Add(lblPercent);
 
             progressBar = new SpotifyProgressBar();
             progressBar.Size = new Size(524, 14);
-            progressBar.Location = new Point(28, 110);
+            progressBar.Location = new Point(28, 100);
             installPanel.Controls.Add(progressBar);
 
             lblCurrentFile = new Label();
@@ -511,7 +553,7 @@ namespace SpotiflyInstaller
             lblCurrentFile.Font = new Font("Segoe UI", 8.5f);
             lblCurrentFile.ForeColor = TextMuted;
             lblCurrentFile.Size = new Size(524, 20);
-            lblCurrentFile.Location = new Point(28, 134);
+            lblCurrentFile.Location = new Point(28, 126);
             installPanel.Controls.Add(lblCurrentFile);
 
             contentPanel.Controls.Add(installPanel);
@@ -525,8 +567,8 @@ namespace SpotiflyInstaller
 
             // Big Green Check Icon
             CheckmarkIcon check = new CheckmarkIcon();
-            check.Size = new Size(64, 64);
-            check.Location = new Point(28, 40);
+            check.Size = new Size(60, 60);
+            check.Location = new Point(28, 24);
             finishPanel.Controls.Add(check);
 
             lblSuccess = new Label();
@@ -534,21 +576,21 @@ namespace SpotiflyInstaller
             lblSuccess.Font = new Font("Segoe UI", 20f, FontStyle.Bold);
             lblSuccess.ForeColor = TextPrimary;
             lblSuccess.AutoSize = true;
-            lblSuccess.Location = new Point(106, 42);
+            lblSuccess.Location = new Point(102, 26);
             finishPanel.Controls.Add(lblSuccess);
 
             lblSuccessDesc = new Label();
             lblSuccessDesc.Text = "Spoti-Fly v" + AppInfo.Version + " has been successfully installed and configured.";
-            lblSuccessDesc.Font = new Font("Segoe UI", 10f);
+            lblSuccessDesc.Font = new Font("Segoe UI", 9.5f);
             lblSuccessDesc.ForeColor = TextSecondary;
             lblSuccessDesc.AutoSize = true;
-            lblSuccessDesc.Location = new Point(108, 82);
+            lblSuccessDesc.Location = new Point(104, 62);
             finishPanel.Controls.Add(lblSuccessDesc);
 
             // Summary Card
             Panel sumCard = new Panel();
-            sumCard.Size = new Size(524, 90);
-            sumCard.Location = new Point(28, 135);
+            sumCard.Size = new Size(524, 110);
+            sumCard.Location = new Point(28, 108);
             sumCard.BackColor = CardBg;
             sumCard.Paint += (s, e) =>
             {
@@ -577,7 +619,7 @@ namespace SpotiflyInstaller
             lblSumPath.Text = "";
             lblSumPath.Font = new Font("Segoe UI", 9.5f);
             lblSumPath.ForeColor = TextPrimary;
-            lblSumPath.Size = new Size(490, 40);
+            lblSumPath.Size = new Size(490, 48);
             lblSumPath.Location = new Point(16, 38);
             sumCard.Controls.Add(lblSumPath);
 
@@ -585,7 +627,7 @@ namespace SpotiflyInstaller
             SpotifyButton btnFinish = new SpotifyButton("Launch Spoti-Fly", true);
             btnFinish.Name = "btnFinish";
             btnFinish.Size = new Size(180, 42);
-            btnFinish.Location = new Point(Width - 28 - 180, 320);
+            btnFinish.Location = new Point(ClientSize.Width - 28 - 180, 318);
             btnFinish.Click += (s, e) =>
             {
                 if (chkLaunchApp.Checked)
