@@ -31,6 +31,7 @@ export interface SpotiflySettings {
   minimalMode?: boolean;
   opacity?: number;
   spotifyClientId?: string;
+  spotifyRedirectUri?: string;
   startOnBoot?: boolean;
   startMinimized?: boolean;
   windowX?: number;
@@ -85,7 +86,7 @@ export interface SpotiflyAPI {
   getQueueNext?: () => Promise<{ title: string; artist: string; artworkUrl?: string | null } | null>;
 
   // Spotify Auth (PKCE)
-  startSpotifyAuth: (clientId: string) => Promise<{ code: string; redirectUri: string; verifier: string } | { error: string }>;
+  startSpotifyAuth: (clientId: string, redirectUri?: string) => Promise<{ code: string; redirectUri: string; verifier: string } | { error: string }>;
   getSpotifyTokens: () => Promise<SpotifyTokens | null>;
   saveSpotifyTokens: (tokens: SpotifyTokens) => Promise<void>;
   clearSpotifyTokens: () => Promise<void>;

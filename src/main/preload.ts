@@ -60,7 +60,7 @@ const spotiflyAPI: SpotiflyAPI = {
 
   getQueueNext: () => ipcRenderer.invoke('spotify:get-queue-next'),
 
-  startSpotifyAuth: (clientId: string) => ipcRenderer.invoke('spotify:start-auth', clientId),
+  startSpotifyAuth: (clientId: string, redirectUri?: string) => ipcRenderer.invoke('spotify:start-auth', clientId, redirectUri),
   getSpotifyTokens: () => ipcRenderer.invoke('spotify:get-tokens'),
   saveSpotifyTokens: (tokens: SpotifyTokens) => ipcRenderer.invoke('spotify:save-tokens', tokens),
   clearSpotifyTokens: () => ipcRenderer.invoke('spotify:clear-tokens'),

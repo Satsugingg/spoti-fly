@@ -924,7 +924,7 @@ ipcMain.handle('media:seek', (_event, seconds: number) => {
 // Spotify PKCE Auth Server
 let authServer: http.Server | null = null;
 
-ipcMain.handle('spotify:start-auth', async (_event, clientId: string) => {
+ipcMain.handle('spotify:start-auth', async (_event, clientId: string, customRedirectUri?: string) => {
   return new Promise((resolve) => {
     try {
       if (authServer) {
@@ -940,7 +940,11 @@ ipcMain.handle('spotify:start-auth', async (_event, clientId: string) => {
         .update(verifier)
         .digest('base64url');
 
-      const redirectUri = 'http://localhost:8888/callback';
+      // Use loopback 127.0.0.1 required by Spotify Developer Platform (banned "localhost")
+      const redirectUri = customRedirectUri || 'http://127.0.0.1:8000/callback';
+      const uriObj = new URL(redirectUri);
+      const port = parseInt(uriObj.port, 10) || 8000;
+
       const scope = encodeURIComponent(
         'user-read-playback-state user-modify-playback-state user-read-currently-playing'
       );
@@ -980,7 +984,7 @@ ipcMain.handle('spotify:start-auth', async (_event, clientId: string) => {
         }
       });
 
-      authServer.listen(8888, () => {
+      authServer.listen(port, '127.0.0.1', () => {
         shell.openExternal(authUrl);
       });
 

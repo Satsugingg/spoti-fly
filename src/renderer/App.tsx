@@ -479,16 +479,17 @@ export const App: React.FC = () => {
   }, [handleTogglePlay, handleNext, handlePrevious, showVolumeHud, triggerVolumeChange]);
 
   // Spotify PKCE Connect
-  const handleConnectSpotify = async (clientId?: string) => {
+  const handleConnectSpotify = async (clientId?: string, redirectUri?: string) => {
     if (!window.spotifly) throw new Error('Electron bridge not found');
     const targetId = clientId || settings.spotifyClientId;
     if (!targetId) {
       handleOpenSettings();
       return;
     }
+    const targetUri = redirectUri || settings.spotifyRedirectUri || 'http://127.0.0.1:8000/callback';
     spotifyApi.setClientId(targetId);
 
-    const res = await window.spotifly.startSpotifyAuth(targetId);
+    const res = await window.spotifly.startSpotifyAuth(targetId, targetUri);
     if ('error' in res) {
       throw new Error(res.error);
     }

@@ -120,6 +120,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [recordingStatus, setRecordingStatus] = useState<string | null>(null);
   const [clientIdInput, setClientIdInput] = useState(settings.spotifyClientId || '');
   const [authError, setAuthError] = useState<string | null>(null);
+  const [copiedUri, setCopiedUri] = useState(false);
 
   useEffect(() => {
     setClientIdInput(settings.spotifyClientId || '');
@@ -619,7 +620,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </button>{' '}
                         in your default browser and log in.
                       </div>
-                      <div>2. Click <b>Create App</b>. In App Settings, add Redirect URI: <span className="font-mono text-emerald-400 select-all bg-black/40 px-1 py-0.5 rounded">http://localhost:8888/callback</span></div>
+                      <div className="pt-0.5">
+                        <span className="text-[9px] text-zinc-300">2. In App Settings, add Redirect URI:</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 my-1">
+                        <code className="flex-1 font-mono text-[9.5px] text-emerald-400 select-all bg-black/60 px-2 py-1 rounded border border-white/10 font-bold">
+                          http://127.0.0.1:8000/callback
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText('http://127.0.0.1:8000/callback');
+                            setCopiedUri(true);
+                            setTimeout(() => setCopiedUri(false), 2000);
+                          }}
+                          className="shrink-0 px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[9px] font-semibold border border-white/10 transition-colors"
+                        >
+                          {copiedUri ? '✓ Copied!' : 'Copy URI'}
+                        </button>
+                      </div>
+                      <div className="text-[8.5px] text-zinc-500 italic pb-0.5">
+                        ℹ Spotify requires the 127.0.0.1 loopback address (Spotify blocks &quot;localhost&quot; for security).
+                      </div>
                       <div>3. Copy your <b>Client ID</b>, paste it above, and click <b>Connect</b>!</div>
                     </div>
                   </div>
