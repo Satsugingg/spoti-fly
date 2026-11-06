@@ -71,19 +71,17 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   const [upNextTrack, setUpNextTrack] = useState<UpNextData | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const lastFetchedQueueRef = useRef<number>(0);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     lastFetchedQueueRef.current = 0;
     setUpNextTrack(null);
   }, [track.title]);
 
-  const handleNextMouseEnter = async () => {
-    setIsNextHovered(true);
+  const fetchQueueData = async () => {
     if (!showUpNextPreview || !onFetchUpNext) return;
-
-    // Cache queue for 8 seconds so hover doesn't repeatedly hammer the API
     const now = Date.now();
-    if (now - lastFetchedQueueRef.current > 8000 || !upNextTrack) {
+    if (now - lastFetchedQueueRef.current > 6000 || !upNextTrack) {
       lastFetchedQueueRef.current = now;
       const data = await onFetchUpNext();
       if (data) {
@@ -92,8 +90,35 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     }
   };
 
+  const handleNextMouseEnter = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setIsNextHovered(true);
+    fetchQueueData();
+  };
+
   const handleNextMouseLeave = () => {
-    setIsNextHovered(false);
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => {
+      setIsNextHovered(false);
+    }, 350);
+  };
+
+  const handlePreviewMouseEnter = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setIsNextHovered(true);
+  };
+
+  const handlePreviewMouseLeave = () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => {
+      setIsNextHovered(false);
+    }, 300);
   };
 
   useEffect(() => {
@@ -220,10 +245,93 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 
   return (
     <div
-      className={`flex-1 flex flex-col px-3 select-none transition-all duration-300 ease-out ${
+      className={`relative flex-1 flex flex-col px-3 select-none transition-all duration-300 ease-out ${
         isShrunk ? 'pt-1 pb-2 justify-between' : 'pt-0.5 pb-2 justify-between'
       }`}
     >
+      {/* Up Next In-Card Overlay Preview (100% inside window, zero clipping, smooth hover) */}
+      {showUpNextPreview && isNextHovered && (
+        <div
+          onMouseEnter={handlePreviewMouseEnter}
+          onMouseLeave={handlePreviewMouseLeave}
+          className="absolute inset-x-2 top-0 bottom-[33px] z-50 rounded-xl bg-zinc-950/95 border border-[#1DB954]/30 p-2 shadow-2xl backdrop-blur-2xl flex items-center gap-2.5 transition-all duration-200 pointer-events-auto"
+        >
+          {/* Left: Artwork / Icon */}
+          <div className="w-11 h-11 rounded-lg overflow-hidden bg-zinc-900 border border-white/10 shrink-0 flex items-center justify-center shadow">
+            {upNextTrack?.artworkUrl ? (
+              <img
+                src={upNextTrack.artworkUrl}
+                alt="Next Track Cover"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center">
+                <Music2 size={18} className="text-[#1DB954]" />
+              </div>
+            )}
+          </div>
+
+          {/* Middle: Track info / Queue prompt */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#1DB954]/20 text-[#1DB954] text-[8.5px] font-bold uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#1DB954] animate-pulse" />
+                Up Next
+              </span>
+              {isSpotifyAuth ? (
+                <span className="text-[8.5px] font-mono text-zinc-400">Spotify Queue</span>
+              ) : (
+                <span className="text-[8.5px] font-mono text-zinc-500">Queue Sync</span>
+              )}
+            </div>
+
+            {upNextTrack ? (
+              <div className="min-w-0">
+                <p className="text-[12px] font-bold text-white truncate leading-tight">
+                  {upNextTrack.title}
+                </p>
+                <p className="text-[10px] text-zinc-400 truncate leading-tight mt-0.5">
+                  {upNextTrack.artist}
+                </p>
+              </div>
+            ) : isSpotifyAuth ? (
+              <p className="text-[10.5px] text-zinc-400 leading-tight">
+                Fetching upcoming queue...
+              </p>
+            ) : (
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[9.5px] text-zinc-300 truncate">
+                  Connect Spotify to preview queue
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onConnectSpotify?.();
+                  }}
+                  className="px-2 py-0.5 rounded bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold text-[9.5px] shrink-0 shadow flex items-center gap-1 transition-colors"
+                >
+                  <Radio size={10} /> Connect 1-Click
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Quick dismiss button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsNextHovered(false);
+            }}
+            className="p-1 text-zinc-500 hover:text-white rounded transition-colors self-start -mr-0.5"
+            title="Close Preview"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Middle Row: Album Artwork + Track Info & Controls */}
       <div className="flex items-center gap-3 mt-0.5">
         {/* Left: Album Artwork */}
@@ -321,79 +429,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               )}
             </button>
 
-            {/* Skip Next with Up Next Hover Tooltip */}
-            <div
-              className="relative"
+            {/* Skip Next with Up Next Hover trigger */}
+            <button
+              onClick={onNext}
               onMouseEnter={handleNextMouseEnter}
               onMouseLeave={handleNextMouseLeave}
+              title="Next Track (Hover for Up Next preview)"
+              className="p-1 text-white hover:text-zinc-200 hover:scale-110 active:scale-90 transition-transform"
             >
-              <button
-                onClick={onNext}
-                className="p-1 text-white hover:text-zinc-200 hover:scale-110 active:scale-90 transition-transform"
-              >
-                <SkipForward size={17} className="fill-white stroke-none" />
-              </button>
-
-              {/* Up Next Hover Floating Preview */}
-              {showUpNextPreview && isNextHovered && (
-                <div className="absolute bottom-9 -right-2 z-50 w-52 rounded-xl bg-zinc-950/95 border border-white/20 p-2.5 shadow-2xl backdrop-blur-2xl transition-all duration-200 animate-in fade-in zoom-in-95 pointer-events-auto">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[9px] font-bold text-[#1DB954] uppercase tracking-wider flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#1DB954] animate-ping" />
-                      Up Next
-                    </span>
-                    {isSpotifyAuth && (
-                      <span className="text-[8.5px] font-mono text-zinc-500">Queue</span>
-                    )}
-                  </div>
-                  {upNextTrack ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg overflow-hidden bg-zinc-800 shrink-0 border border-white/10 flex items-center justify-center shadow">
-                        {upNextTrack.artworkUrl ? (
-                          <img
-                            src={upNextTrack.artworkUrl}
-                            alt="Next Cover"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <Music2 size={14} className="text-zinc-500" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0 text-left">
-                        <p className="text-[11px] font-semibold text-white truncate leading-tight">
-                          {upNextTrack.title}
-                        </p>
-                        <p className="text-[9.5px] text-zinc-400 truncate leading-tight mt-0.5">
-                          {upNextTrack.artist}
-                        </p>
-                      </div>
-                    </div>
-                  ) : isSpotifyAuth ? (
-                    <p className="text-[10px] text-zinc-400 text-left leading-tight py-1">
-                      Loading queue...
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-1 text-left">
-                      <p className="text-[9.5px] text-zinc-400 leading-tight">
-                        Connect Spotify to preview upcoming queue songs.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onConnectSpotify?.();
-                        }}
-                        className="mt-1 w-full py-1 px-2 rounded-md bg-[#1DB954] hover:bg-[#1ed760] text-black text-[10px] font-bold transition-colors flex items-center justify-center gap-1 shadow"
-                      >
-                        <Radio size={11} /> Connect 1-Click
-                      </button>
-                    </div>
-                  )}
-                  {/* Tooltip Arrow pointing down to Next button */}
-                  <div className="absolute top-full right-3 -mt-px border-4 border-transparent border-t-zinc-950" />
-                </div>
-              )}
-            </div>
+              <SkipForward size={17} className="fill-white stroke-none" />
+            </button>
 
             {/* Repeat */}
             <button

@@ -692,7 +692,19 @@ namespace SpotiflyInstaller
                     }
                 }
 
-                worker.ReportProgress(92, "Remembering install location...");
+                worker.ReportProgress(92, "Cleaning temporary files...");
+                // Clean up any temporary .old files created during locked-file replacement
+                try
+                {
+                    string[] oldFiles = Directory.GetFiles(targetDirectory, "*.old.*", SearchOption.AllDirectories);
+                    foreach (string f in oldFiles)
+                    {
+                        try { File.Delete(f); } catch { }
+                    }
+                }
+                catch { }
+
+                worker.ReportProgress(94, "Remembering install location...");
                 // 4. Remember install location without touching Windows Registry!
                 try
                 {
@@ -788,90 +800,112 @@ namespace SpotiflyInstaller
         {
             int currentPid = Process.GetCurrentProcess().Id;
 
-            // A. Kill via taskkill /F /T specifically for the main player executable and helpers
+            // A. Terminate via native taskkill.exe with /F /T (without nested quotes)
+            string system32 = Environment.SystemDirectory;
+            string taskkillExe = Path.Combine(system32, "taskkill.exe");
+            if (!File.Exists(taskkillExe)) taskkillExe = "taskkill";
+
             string[] imageNames = new string[] { "Spoti-Fly.exe", "spotifly_vol.exe", "media_keys.exe" };
             foreach (string img in imageNames)
             {
                 try
                 {
-                    ProcessStartInfo psi = new ProcessStartInfo("taskkill", "/F /IM \"" + img + "\" /T")
+                    ProcessStartInfo psi = new ProcessStartInfo(taskkillExe, "/F /T /IM " + img)
                     {
                         CreateNoWindow = true,
                         UseShellExecute = false
                     };
                     using (Process p = Process.Start(psi))
                     {
-                        if (p != null) p.WaitForExit(2000);
+                        if (p != null) p.WaitForExit(1500);
                     }
                 }
                 catch { }
             }
 
             // B. Check running .NET Process objects for any lingering player process, EXCLUDING this installer
-            try
+            for (int pass = 0; pass < 3; pass++)
             {
-                Process[] allProcs = Process.GetProcesses();
-                foreach (Process p in allProcs)
+                try
                 {
-                    try
+                    Process[] allProcs = Process.GetProcesses();
+                    foreach (Process p in allProcs)
                     {
-                        // NEVER kill the installer itself!
-                        if (p.Id == currentPid) continue;
-
-                        string pName = p.ProcessName.ToLowerInvariant();
-                        // Never kill setup or installer tools
-                        if (pName.Contains("setup") || pName.Contains("installer")) continue;
-
-                        // Target exact Spoti-Fly player processes or helpers
-                        bool match = string.Equals(pName, "spoti-fly", StringComparison.OrdinalIgnoreCase)
-                                  || string.Equals(pName, "spotifly", StringComparison.OrdinalIgnoreCase)
-                                  || string.Equals(pName, "spotifly_vol", StringComparison.OrdinalIgnoreCase)
-                                  || string.Equals(pName, "media_keys", StringComparison.OrdinalIgnoreCase);
-
-                        if (!match && !string.IsNullOrEmpty(targetDir) && Directory.Exists(targetDir))
+                        try
                         {
-                            try
+                            // NEVER kill the installer itself!
+                            if (p.Id == currentPid) continue;
+
+                            string pName = p.ProcessName.ToLowerInvariant();
+                            // Never kill setup or installer tools
+                            if (pName.Contains("setup") || pName.Contains("installer")) continue;
+
+                            // Target exact Spoti-Fly player processes or helpers
+                            bool match = string.Equals(pName, "spoti-fly", StringComparison.OrdinalIgnoreCase)
+                                      || string.Equals(pName, "spotifly", StringComparison.OrdinalIgnoreCase)
+                                      || string.Equals(pName, "spotifly_vol", StringComparison.OrdinalIgnoreCase)
+                                      || string.Equals(pName, "media_keys", StringComparison.OrdinalIgnoreCase);
+
+                            if (!match && !string.IsNullOrEmpty(targetDir) && Directory.Exists(targetDir))
                             {
-                                string moduleFile = p.MainModule != null ? p.MainModule.FileName : null;
-                                if (!string.IsNullOrEmpty(moduleFile) && moduleFile.StartsWith(targetDir, StringComparison.OrdinalIgnoreCase))
+                                try
                                 {
-                                    match = true;
+                                    string moduleFile = p.MainModule != null ? p.MainModule.FileName : null;
+                                    if (!string.IsNullOrEmpty(moduleFile) && moduleFile.StartsWith(targetDir, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        match = true;
+                                    }
                                 }
+                                catch { }
                             }
-                            catch { }
-                        }
 
-                        if (match)
-                        {
-                            p.Kill();
-                            p.WaitForExit(1000);
+                            if (match)
+                            {
+                                p.Kill();
+                                p.WaitForExit(800);
+                            }
                         }
+                        catch { }
                     }
-                    catch { }
                 }
+                catch { }
+                System.Threading.Thread.Sleep(100);
             }
-            catch { }
 
-            // C. Wait and poll file locks on target executables (e.g. Spoti-Fly.exe)
+            // C. Poll until all Spoti-Fly processes are completely gone
+            int waitElapsed = 0;
+            while (waitElapsed < 5000)
+            {
+                Process[] lingering = Process.GetProcessesByName("Spoti-Fly");
+                if (lingering == null || lingering.Length == 0) break;
+                foreach (var lp in lingering)
+                {
+                    try { if (lp.Id != currentPid) lp.Kill(); } catch { }
+                }
+                System.Threading.Thread.Sleep(200);
+                waitElapsed += 200;
+            }
+
+            // D. Wait and poll file locks on target executables (e.g. Spoti-Fly.exe)
             string[] checkFiles = new string[] { "Spoti-Fly.exe", @"resources\app.asar.unpacked\dist\main\spotifly_vol.exe", @"resources\app.asar.unpacked\dist\main\media_keys.exe" };
             foreach (string rel in checkFiles)
             {
                 string fullPath = Path.Combine(targetDir, rel);
                 if (File.Exists(fullPath))
                 {
-                    int maxWait = 6000;
+                    int maxWait = 4000;
                     int elapsed = 0;
                     while (elapsed < maxWait)
                     {
                         if (!IsFileLocked(fullPath)) break;
-                        System.Threading.Thread.Sleep(250);
-                        elapsed += 250;
+                        System.Threading.Thread.Sleep(200);
+                        elapsed += 200;
                     }
                 }
             }
 
             // Brief pause for Windows file system buffers
-            System.Threading.Thread.Sleep(300);
+            System.Threading.Thread.Sleep(200);
         }
 
         private static bool IsFileLocked(string filePath)
@@ -899,11 +933,40 @@ namespace SpotiflyInstaller
 
         private static void ExtractEntryWithRetry(ZipArchiveEntry entry, string destPath)
         {
+            destPath = Path.GetFullPath(destPath);
+            string parent = Path.GetDirectoryName(destPath);
+            if (!Directory.Exists(parent)) Directory.CreateDirectory(parent);
+
             int maxRetries = 10;
             for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
                 try
                 {
+                    // If target file exists, try deleting or moving it aside to avoid lock collision
+                    if (File.Exists(destPath))
+                    {
+                        try
+                        {
+                            File.Delete(destPath);
+                        }
+                        catch
+                        {
+                            // On Windows, a locked file can almost always be RENAMED out of the way!
+                            string tempOld = destPath + ".old." + Guid.NewGuid().ToString("N");
+                            try
+                            {
+                                File.Move(destPath, tempOld);
+                                try { File.Delete(tempOld); } catch { }
+                            }
+                            catch
+                            {
+                                // If move also fails, attempt aggressive process termination
+                                CloseRunningSpotiFlyInstances(Path.GetDirectoryName(destPath));
+                                throw;
+                            }
+                        }
+                    }
+
                     entry.ExtractToFile(destPath, true);
                     return;
                 }
@@ -914,29 +977,9 @@ namespace SpotiflyInstaller
                         throw new IOException("Failed to write to '" + destPath + "' after " + maxRetries + " attempts: " + ex.Message, ex);
                     }
 
-                    // If file is locked, trigger another taskkill for the player executable in case a process lingered
-                    if (destPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                    {
-                        try
-                        {
-                            string fileName = Path.GetFileName(destPath);
-                            if (!fileName.ToLowerInvariant().Contains("setup") && !fileName.ToLowerInvariant().Contains("installer"))
-                            {
-                                ProcessStartInfo psi = new ProcessStartInfo("taskkill", "/F /IM \"" + fileName + "\" /T")
-                                {
-                                    CreateNoWindow = true,
-                                    UseShellExecute = false
-                                };
-                                using (Process p = Process.Start(psi))
-                                {
-                                    if (p != null) p.WaitForExit(1000);
-                                }
-                            }
-                        }
-                        catch { }
-                    }
-
-                    System.Threading.Thread.Sleep(350);
+                    // If file is locked, kill any lingering processes and back off
+                    CloseRunningSpotiFlyInstances(Path.GetDirectoryName(destPath));
+                    System.Threading.Thread.Sleep(300 * attempt);
                 }
             }
         }
