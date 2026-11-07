@@ -255,6 +255,7 @@ export const App: React.FC = () => {
       const state = await spotifyApi.fetchCurrentPlayback();
       if (mounted && state && state.hasMedia) {
         setTrack(state);
+        window.spotifly?.updateDiscordActivity?.(state);
       }
     };
 

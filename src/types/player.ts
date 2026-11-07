@@ -47,6 +47,8 @@ export interface SpotiflySettings {
   showUpNextPreview?: boolean;
   showLyrics?: boolean;
   showKaraokeButton?: boolean;
+  enableDiscordRPC?: boolean;
+  discordClientId?: string;
 }
 
 export interface SpotifyTokens {
@@ -107,6 +109,7 @@ export interface SpotiflyAPI {
   getStartOnBoot: () => Promise<boolean>;
   setStartOnBoot: (enabled: boolean) => Promise<boolean>;
   openExternalUrl?: (url: string) => Promise<void>;
+  updateDiscordActivity?: (track: TrackState | null) => Promise<void>;
 }
 
 declare global {

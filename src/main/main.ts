@@ -4,6 +4,7 @@ import fs from 'fs';
 import http from 'http';
 import { execFile } from 'child_process';
 import { GsmtcBridge } from './gsmtc-bridge';
+import { DiscordRpcClient } from './discord-rpc';
 import { SpotiflySettings, SpotifyTokens, TrackState, HotkeyConfig } from '../types/player';
 
 const logFile = path.join(app.getPath('userData'), 'spotifly-debug.log');
@@ -83,6 +84,7 @@ try {
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let gsmtcBridge: GsmtcBridge | null = null;
+let discordRpc: DiscordRpcClient | null = null;
 let isAlwaysOnTop = true;
 let isQuitting = false;
 let targetHeight = 130;
@@ -120,6 +122,8 @@ const defaultSettings: SpotiflySettings = {
   showUpNextPreview: false,
   showLyrics: false,
   showKaraokeButton: true,
+  enableDiscordRPC: true,
+  discordClientId: '',
 };
 
 function applyStartOnBoot(enabled: boolean, startMinimized: boolean = false) {
@@ -177,6 +181,9 @@ function saveSettings(settings: Partial<SpotiflySettings>) {
     }
     if (typeof settings.playerScale === 'number' && settings.playerScale !== currentScalePercent) {
       applyPlayerScale(settings.playerScale);
+    }
+    if (typeof settings.enableDiscordRPC === 'boolean' || typeof settings.discordClientId === 'string') {
+      discordRpc?.updateConfig(updated.enableDiscordRPC !== false, updated.discordClientId);
     }
   } catch (err) {
     logDebug(`[CONFIG] Failed to save settings: ${err}`);
@@ -458,11 +465,21 @@ function createWindow() {
   // Setup System Tray
   setupTray();
 
+  // Initialize Discord Rich Presence
+  if (!discordRpc) {
+    discordRpc = new DiscordRpcClient({
+      enabled: settings.enableDiscordRPC !== false,
+      clientId: settings.discordClientId,
+      onLog: logDebug,
+    });
+  }
+
   // Initialize GSMTC bridge
   gsmtcBridge = new GsmtcBridge((track: TrackState) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('media:update', track);
     }
+    discordRpc?.setActivity(track);
   });
 }
 
@@ -1170,6 +1187,10 @@ ipcMain.handle('app:open-external', async (_event, url: string) => {
   }
 });
 
+ipcMain.handle('discord:update-track', (_event, track: TrackState | null) => {
+  discordRpc?.setActivity(track);
+});
+
 // Volume & Audio Tool Integration (Native Windows Master & App Volume via spotifly_vol.exe)
 function getVolToolPath(): string {
   const p1 = path.resolve(__dirname, 'spotifly_vol.exe');
@@ -1456,6 +1477,10 @@ app.on('will-quit', () => {
   if (gsmtcBridge) {
     gsmtcBridge.destroy();
     gsmtcBridge = null;
+  }
+  if (discordRpc) {
+    discordRpc.destroy();
+    discordRpc = null;
   }
   if (authServer) {
     authServer.close();

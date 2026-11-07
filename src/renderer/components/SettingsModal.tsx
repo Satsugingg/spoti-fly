@@ -19,6 +19,18 @@ import { SpotiflySettings, HotkeyConfig } from '../../types/player';
 import logoUrl from '../assets/logo.png';
 import packageJson from '../../../package.json';
 
+const DiscordIcon = ({ size = 14, className = '' }: { size?: number; className?: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+  </svg>
+);
+
 export const DEFAULT_HOTKEYS: Required<HotkeyConfig> = {
   playPause: 'CommandOrControl+Alt+Space',
   nextTrack: 'CommandOrControl+Alt+Right',
@@ -120,12 +132,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [recordingAction, setRecordingAction] = useState<keyof HotkeyConfig | null>(null);
   const [recordingStatus, setRecordingStatus] = useState<string | null>(null);
   const [clientIdInput, setClientIdInput] = useState(settings.spotifyClientId || '');
+  const [discordClientIdInput, setDiscordClientIdInput] = useState(settings.discordClientId || '');
+  const [isDiscordIdSaved, setIsDiscordIdSaved] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [copiedUri, setCopiedUri] = useState(false);
 
   useEffect(() => {
     setClientIdInput(settings.spotifyClientId || '');
   }, [settings.spotifyClientId]);
+
+  useEffect(() => {
+    setDiscordClientIdInput(settings.discordClientId || '');
+  }, [settings.discordClientId]);
 
   const isStartOnBoot = settings.startOnBoot !== false;
   const isStartMinimized = Boolean(settings.startMinimized);
@@ -134,6 +152,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const isUpNextPreview = Boolean(settings.showUpNextPreview);
   const isKaraokeButton = settings.showKaraokeButton !== false;
   const isScrollVolume = settings.enableScrollVolume !== false;
+  const isDiscordRpc = settings.enableDiscordRPC !== false;
 
   useEffect(() => {
     if (!recordingAction) {
@@ -875,6 +894,117 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* Discord Rich Presence */}
+          <div
+            className={`w-full p-2.5 rounded-xl border transition-all text-left ${
+              isDiscordRpc
+                ? 'bg-[#5865F2]/10 border-[#5865F2]/40'
+                : 'bg-zinc-800/50 border-white/5'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => onUpdateSettings({ enableDiscordRPC: !isDiscordRpc })}
+              className="w-full flex items-start justify-between gap-3 text-left"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <DiscordIcon
+                    size={14}
+                    className={isDiscordRpc ? 'text-[#5865F2]' : 'text-zinc-400'}
+                  />
+                  <span className="font-semibold text-[12px] text-white">
+                    Discord Rich Presence
+                  </span>
+                  {isDiscordRpc && (
+                    <span className="text-[8.5px] px-1.5 py-0.2 rounded-full bg-[#5865F2]/20 text-[#8ea1e1] font-mono">
+                      Active
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-zinc-400 leading-tight">
+                  Display current track, elapsed progress seekbar, and album artwork on your Discord profile.
+                </p>
+              </div>
+
+              {/* Toggle Pill Switch */}
+              <div
+                className={`shrink-0 w-8 h-4.5 rounded-full p-0.5 transition-colors mt-0.5 flex items-center ${
+                  isDiscordRpc ? 'bg-[#5865F2]' : 'bg-zinc-700'
+                }`}
+              >
+                <div
+                  className={`w-3.5 h-3.5 rounded-full bg-white shadow-md transform transition-transform ${
+                    isDiscordRpc ? 'translate-x-3.5' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </button>
+
+            {/* Custom Discord Client ID (Optional) */}
+            {isDiscordRpc && (
+              <div className="mt-2.5 pt-2 border-t border-white/10 pl-2 border-l-2 border-[#5865F2]/50 ml-0.5 flex flex-col gap-2">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="font-semibold text-zinc-300">Custom Application ID (Optional)</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (window.spotifly?.openExternalUrl) {
+                        window.spotifly.openExternalUrl('https://discord.com/developers/applications');
+                      } else {
+                        window.open('https://discord.com/developers/applications', '_blank');
+                      }
+                    }}
+                    className="text-[#8ea1e1] hover:underline flex items-center gap-0.5 text-[9.5px] cursor-pointer bg-transparent border-none p-0 font-medium"
+                  >
+                    discord.com/developers ↗
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={discordClientIdInput}
+                    onChange={(e) => {
+                      setDiscordClientIdInput(e.target.value.trim());
+                      setIsDiscordIdSaved(false);
+                    }}
+                    placeholder="Default: Spoti-Fly RPC"
+                    className="flex-1 px-2 py-1 rounded bg-zinc-900 border border-white/10 text-white text-[10px] font-mono focus:border-[#5865F2] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onUpdateSettings({ discordClientId: discordClientIdInput });
+                      setIsDiscordIdSaved(true);
+                      setTimeout(() => setIsDiscordIdSaved(false), 2000);
+                    }}
+                    className="shrink-0 px-2.5 py-1 rounded bg-[#5865F2] hover:bg-[#4752C4] text-white text-[10px] font-bold transition-colors shadow"
+                  >
+                    {isDiscordIdSaved ? '✓ Saved' : 'Apply'}
+                  </button>
+                  {discordClientIdInput && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDiscordClientIdInput('');
+                        onUpdateSettings({ discordClientId: '' });
+                      }}
+                      title="Reset to default Spoti-Fly RPC"
+                      className="p-1 rounded text-zinc-500 hover:text-white hover:bg-white/10 transition-colors text-[10px]"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <p className="text-[9px] text-zinc-400 leading-tight">
+                  Uses Spoti-Fly&apos;s zero-config music presence out-of-the-box. Enter your own Discord Application Client ID if you want custom profile titles or status banners.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Desktop Shortcut Toggle */}

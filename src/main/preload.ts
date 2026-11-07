@@ -75,6 +75,7 @@ const spotiflyAPI: SpotiflyAPI = {
   getStartOnBoot: () => ipcRenderer.invoke('app:get-start-on-boot'),
   setStartOnBoot: (enabled: boolean) => ipcRenderer.invoke('app:set-start-on-boot', enabled),
   openExternalUrl: (url: string) => ipcRenderer.invoke('app:open-external', url),
+  updateDiscordActivity: (track: TrackState | null) => ipcRenderer.invoke('discord:update-track', track),
 };
 
 contextBridge.exposeInMainWorld('spotifly', spotiflyAPI);
