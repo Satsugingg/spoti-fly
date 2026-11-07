@@ -214,6 +214,10 @@ export class DiscordRpcClient {
         if (this.pendingTrack) {
           this.dispatchActivity(this.pendingTrack);
         }
+      } else if (packet.cmd === 'SET_ACTIVITY') {
+        const details = packet.data?.details || '(cleared)';
+        const appName = packet.data?.name || 'Spoti-Fly';
+        this.log(`Presence confirmed by Discord: [${appName}] ${details}`);
       } else if (packet.evt === 'ERROR') {
         this.log(`Discord returned error: ${JSON.stringify(packet.data)}`);
       }
@@ -247,6 +251,8 @@ export class DiscordRpcClient {
       this.clearActivity();
       return;
     }
+
+    this.log(`Dispatching to Discord: "${track.title}" by ${track.artist || 'Unknown'} (${track.isPlaying ? 'Playing' : 'Paused'})`);
 
     let stateStr = track.artist || '';
     if (track.album && track.album !== track.title) {

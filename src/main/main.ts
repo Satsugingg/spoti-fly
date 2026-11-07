@@ -184,6 +184,10 @@ function saveSettings(settings: Partial<SpotiflySettings>) {
     }
     if (typeof settings.enableDiscordRPC === 'boolean' || typeof settings.discordClientId === 'string') {
       discordRpc?.updateConfig(updated.enableDiscordRPC !== false, updated.discordClientId);
+      const cur = gsmtcBridge?.getCurrentTrack();
+      if (cur && cur.hasMedia) {
+        discordRpc?.setActivity(cur);
+      }
     }
   } catch (err) {
     logDebug(`[CONFIG] Failed to save settings: ${err}`);
@@ -481,6 +485,11 @@ function createWindow() {
     }
     discordRpc?.setActivity(track);
   });
+
+  const initialTrack = gsmtcBridge.getCurrentTrack();
+  if (initialTrack && initialTrack.hasMedia) {
+    discordRpc?.setActivity(initialTrack);
+  }
 }
 
 function setupTray() {
