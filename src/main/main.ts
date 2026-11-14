@@ -63,7 +63,7 @@ try {
 try {
   if (app.isPackaged) {
     const initialSettings = loadSettings();
-    applyStartOnBoot(initialSettings.startOnBoot !== false, Boolean(initialSettings.startMinimized));
+    applyStartOnBoot(initialSettings.startOnBoot === true, Boolean(initialSettings.startMinimized));
 
     const desktopPath = app.getPath('desktop');
     const shortcutPath = path.join(desktopPath, 'Spoti-Fly.lnk');
@@ -112,7 +112,7 @@ const defaultSettings: SpotiflySettings = {
   autoCollapse: true,
   playerScale: 100,
   opacity: 100,
-  startOnBoot: true,
+  startOnBoot: false,
   startMinimized: false,
   volumeTarget: 'system',
   enableScrollVolume: true,
@@ -126,18 +126,88 @@ const defaultSettings: SpotiflySettings = {
   discordClientId: '',
 };
 
-function applyStartOnBoot(enabled: boolean, startMinimized: boolean = false) {
+function cleanAllAutostartEntries() {
   try {
     if (app.isPackaged) {
-      const args = enabled
-        ? (startMinimized ? ['--autostart', '--minimized'] : ['--autostart'])
-        : [];
       app.setLoginItemSettings({
-        openAtLogin: enabled,
+        openAtLogin: false,
+        path: process.execPath,
+        args: [],
+      });
+    }
+  } catch (err: any) {
+    logDebug(`[AUTOSTART] Login item removal error: ${err?.message}`);
+  }
+
+  if (process.platform === 'win32') {
+    // 1. Thoroughly purge legacy/stale registry entries (e.g. Spotifly, Spoti-Fly, electron.app.Spotifly)
+    // NEVER touch the official Spotify application entry
+    try {
+      const { execSync } = require('child_process');
+      const regOutput: string = execSync('reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"', {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      const lines = regOutput.split(/\r?\n/);
+      for (const line of lines) {
+        const match = line.match(/^\s*([^\s]+)\s+REG_SZ/);
+        if (match) {
+          const valueName = match[1];
+          if (/spoti-?fly/i.test(valueName)) {
+            try {
+              execSync(`reg delete "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "${valueName}" /f`, {
+                stdio: 'ignore',
+              });
+              logDebug(`[AUTOSTART] Purged registry run key: ${valueName}`);
+            } catch {}
+          }
+        }
+      }
+    } catch (err: any) {
+      logDebug(`[AUTOSTART] Registry purge error: ${err?.message}`);
+    }
+
+    // 2. Thoroughly purge any stray shortcuts placed in the Windows Startup folder
+    try {
+      const startupDir = path.join(
+        app.getPath('appData'),
+        'Microsoft',
+        'Windows',
+        'Start Menu',
+        'Programs',
+        'Startup'
+      );
+      if (fs.existsSync(startupDir)) {
+        const files = fs.readdirSync(startupDir);
+        for (const file of files) {
+          if (/spoti-?fly.*\.lnk$/i.test(file)) {
+            try {
+              fs.unlinkSync(path.join(startupDir, file));
+              logDebug(`[AUTOSTART] Purged startup folder shortcut: ${file}`);
+            } catch {}
+          }
+        }
+      }
+    } catch (err: any) {
+      logDebug(`[AUTOSTART] Startup folder shortcut purge error: ${err?.message}`);
+    }
+  }
+}
+
+function applyStartOnBoot(enabled: boolean, startMinimized: boolean = false) {
+  try {
+    cleanAllAutostartEntries();
+
+    if (enabled && app.isPackaged) {
+      const args = startMinimized ? ['--autostart', '--minimized'] : ['--autostart'];
+      app.setLoginItemSettings({
+        openAtLogin: true,
         path: process.execPath,
         args: args,
       });
-      logDebug(`[AUTOSTART] Applied openAtLogin: ${enabled}, args: ${JSON.stringify(args)}`);
+      logDebug(`[AUTOSTART] Applied openAtLogin: true, args: ${JSON.stringify(args)}`);
+    } else {
+      logDebug(`[AUTOSTART] Start on boot disabled; all autostart entries cleanly purged.`);
     }
   } catch (err: any) {
     logDebug(`[AUTOSTART] Login item update error: ${err?.message}`);
@@ -174,7 +244,7 @@ function saveSettings(settings: Partial<SpotiflySettings>) {
     fs.writeFileSync(configPath, JSON.stringify(updated, null, 2), 'utf8');
 
     if (typeof settings.startOnBoot === 'boolean' || typeof settings.startMinimized === 'boolean') {
-      applyStartOnBoot(updated.startOnBoot !== false, Boolean(updated.startMinimized));
+      applyStartOnBoot(updated.startOnBoot === true, Boolean(updated.startMinimized));
     }
     if (typeof settings.globalHotkeysEnabled === 'boolean' || settings.hotkeys) {
       registerGlobalHotkeys();
@@ -1173,11 +1243,11 @@ ipcMain.handle('app:get-start-on-boot', () => {
         path: process.execPath,
         args: ['--autostart'],
       });
-      return login.openAtLogin;
+      return Boolean(login.openAtLogin);
     }
-    return true;
+    return false;
   } catch {
-    return true;
+    return false;
   }
 });
 

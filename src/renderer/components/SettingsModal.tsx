@@ -145,7 +145,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setDiscordClientIdInput(settings.discordClientId || '');
   }, [settings.discordClientId]);
 
-  const isStartOnBoot = settings.startOnBoot !== false;
+  const isStartOnBoot = Boolean(settings.startOnBoot);
   const isStartMinimized = Boolean(settings.startMinimized);
   const isGlobalHotkeys = settings.globalHotkeysEnabled !== false;
   const isEdgeSnapping = settings.enableEdgeSnapping !== false;

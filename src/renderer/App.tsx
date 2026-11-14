@@ -59,7 +59,7 @@ export const App: React.FC = () => {
     minimalMode: false,
     autoCollapse: true,
     playerScale: 100,
-    startOnBoot: true,
+    startOnBoot: false,
     startMinimized: false,
     volumeTarget: 'system',
     enableScrollVolume: true,
