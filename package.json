@@ -1,6 +1,6 @@
 {
   "name": "spoti-fly",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Always-on-Top Spotify Mini-Player for Windows",
   "main": "dist/main/main.js",
   "author": "satsugingg",

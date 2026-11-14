@@ -105,10 +105,13 @@ async function main() {
     }
   }
 
-  // 3. Clean up payload.zip
+  // 3. Clean up payload.zip and temporary unpacked staging directory
   console.log(`[3/3] Cleaning up temporary files...`);
   if (fs.existsSync(payloadZip)) {
     fs.unlinkSync(payloadZip);
+  }
+  if (fs.existsSync(unpackedDir)) {
+    fs.rmSync(unpackedDir, { recursive: true, force: true });
   }
 
   const exeSize = (fs.statSync(outputExe).size / (1024 * 1024)).toFixed(2);
